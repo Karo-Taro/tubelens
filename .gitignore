@@ -1,0 +1,16 @@
+# Файлы, которые установщик помощника создаёт под конкретный компьютер (содержат личные пути)
+native-host/com.tubelens.dl.json
+native-host/tubelens_dl.bat
+native-host/tubelens_dl.sh
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Архивы сборки и системный мусор
+*.zip
+*.crx
+*.pem
+.DS_Store
+Thumbs.db

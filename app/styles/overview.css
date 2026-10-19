@@ -1,0 +1,134 @@
+/* Стили экранов группы: overview (Обзор, Ключевые слова, Аутлаеры).
+   Только токены из app.css / themes.js; каждый селектор — под классом своего экрана. */
+
+/* ============ Обзор ============ */
+.v-dashboard .notice { margin-bottom: var(--s6); }
+
+/* герой: мой канал */
+.v-dashboard .dash-hero { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s6); }
+.v-dashboard .dash-id { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; padding-bottom: var(--s5); border-bottom: 1px solid var(--line); }
+.v-dashboard .dash-ava { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: var(--panel2); flex-shrink: 0; box-shadow: 0 0 0 1px var(--line2); }
+.v-dashboard .dash-who { flex: 1 1 180px; min-width: 0; }
+.v-dashboard .dash-who h2 { margin: var(--s1) 0 2px; font-size: var(--fs-xl); line-height: 1.2; overflow-wrap: break-word; }
+.v-dashboard .dash-body { display: grid; gap: var(--s6); padding: var(--s6) 0; align-items: end; }
+.v-dashboard .dash-key .hero-num { margin: var(--s3) 0 var(--s2); font-size: 44px; }
+.v-dashboard .dash-stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+@media (min-width: 760px) {
+  .v-dashboard .dash-body { grid-template-columns: minmax(200px, 260px) 1fr; gap: var(--s10); }
+}
+
+/* «плёнка» последних выпусков — родственница линейки: деления по времени, высота = ×к медиане */
+.v-dashboard .dash-reel { margin: 0; min-width: 0; }
+.v-dashboard .dash-reel figcaption { display: flex; justify-content: space-between; align-items: baseline; gap: var(--s3); margin-bottom: var(--s3); }
+.v-dashboard .dash-reel-track { position: relative; display: flex; align-items: flex-end; gap: 3px; height: 72px; padding-top: var(--s1);
+  background: linear-gradient(var(--line2), var(--line2)) bottom / 100% 1px no-repeat; }
+.v-dashboard .dash-reel-track i { flex: 1; min-width: 2px; border-radius: 1px 1px 0 0; background: var(--line2); transition: background-color .15s; }
+.v-dashboard .dash-reel-track i.ok { background: var(--muted); opacity: .7; }
+.v-dashboard .dash-reel-track i.hi { background: var(--accent); }
+.v-dashboard .dash-reel-track i:hover { background: var(--text); opacity: 1; }
+.v-dashboard .dash-reel-med { position: absolute; left: 0; right: 0; height: 0; border-top: 1px dashed var(--muted); opacity: .8; pointer-events: none; }
+.v-dashboard .dash-reel-scale { display: flex; justify-content: space-between; gap: var(--s3); margin-top: var(--s2); font-size: var(--fs-xs); color: var(--muted); }
+.v-dashboard .dash-reel-key { display: flex; gap: var(--s4); flex-wrap: wrap; justify-content: center; }
+.v-dashboard .dash-reel-key > span { display: inline-flex; align-items: center; gap: 6px; }
+.v-dashboard .dash-reel-key i { display: inline-block; width: 12px; }
+.v-dashboard .dash-reel-key .k-med { border-top: 1px dashed var(--muted); }
+.v-dashboard .dash-reel-key .k-hi { height: 8px; width: 6px; border-radius: 1px; background: var(--accent); }
+
+.v-dashboard .dash-idle { margin: 0; max-width: 64ch; }
+.v-dashboard #ideasOut .loading { padding: var(--s2) 0; }
+
+/* пустое состояние: канал не указан */
+.v-dashboard .dash-empty { border: 1px dashed var(--line2); border-radius: var(--radius); padding: var(--s8) var(--s6); }
+.v-dashboard .dash-empty h2 { margin: var(--s2) 0 var(--s2); font: 600 var(--fs-xl)/1.25 var(--display); letter-spacing: -.02em; }
+.v-dashboard .dash-empty > p { max-width: 58ch; margin: 0 0 var(--s5); }
+.v-dashboard .dash-empty .row { gap: var(--s3); }
+.v-dashboard .dash-empty .dash-empty-ai { display: flex; gap: var(--s2); align-items: center; margin: var(--s5) 0 0; }
+
+/* подсказка про командную строку */
+.v-dashboard .dash-cmd { display: inline-flex; align-items: center; gap: var(--s2); max-width: 100%; height: 38px; padding: 0 var(--s2) 0 var(--s3); background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font: inherit; font-size: var(--fs-s); cursor: pointer; transition: color .15s, border-color .15s; }
+.v-dashboard .dash-cmd span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-dashboard .dash-cmd:hover { color: var(--text); border-color: var(--line2); }
+.v-dashboard .dash-cmd kbd { font: 500 var(--fs-xs)/1 var(--mono); border: 1px solid var(--line2); border-radius: 4px; padding: 3px 5px; margin-left: var(--s1); }
+.v-dashboard .empty p { margin: 0 0 var(--s4); }
+.v-dashboard .empty p:last-child { margin: 0; }
+
+@media (max-width: 560px) {
+  .v-dashboard .dash-hero { padding: var(--s4); }
+  .v-dashboard .dash-body { padding: var(--s5) 0; }
+  .v-dashboard .dash-key .hero-num { font-size: var(--fs-3xl); }
+  .v-dashboard .dash-stats { grid-template-columns: 1fr 1fr; }
+  .v-dashboard .dash-empty { padding: var(--s6) var(--s4); }
+}
+
+/* ============ Ключевые слова ============ */
+.v-keywords .kw-form { display: flex; gap: var(--s2); flex-wrap: wrap; }
+.v-keywords .kw-form .search { flex: 1; min-width: 220px; }
+.v-keywords .kw-form .search input { height: 44px; font-size: var(--fs-l); }
+.v-keywords .kw-form .btn { height: 44px; }
+.v-keywords .kw-note { margin: var(--s2) 0 0; }
+.v-keywords .kw-live:not(:empty) { margin-top: var(--s4); }
+.v-keywords .kw-live .eyebrow { margin-bottom: var(--s2); }
+.v-keywords .kw-idle { margin-top: var(--s8); }
+.v-keywords .kw-idle p { margin: 0; }
+.v-keywords #res:not(:empty) { margin-top: var(--s8); }
+
+.v-keywords .kw-result { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s6); }
+.v-keywords .kw-head { display: flex; align-items: flex-end; gap: var(--s4); flex-wrap: wrap; padding-bottom: var(--s5); margin-bottom: var(--s6); border-bottom: 1px solid var(--line); }
+.v-keywords .kw-title { flex: 1; min-width: 200px; }
+.v-keywords .kw-title h2 { margin: var(--s2) 0 0; font: 600 var(--fs-2xl)/1.15 var(--display); letter-spacing: -.02em; overflow-wrap: break-word; }
+.v-keywords .kw-stats { margin-top: var(--s3); grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+
+.v-keywords .kw-insights { list-style: none; margin: 0; padding: 0; max-width: 80ch; }
+.v-keywords .kw-insights li { position: relative; padding: var(--s2) 0 var(--s2) var(--s5); border-bottom: 1px dashed var(--line); }
+.v-keywords .kw-insights li:last-child { border-bottom: 0; }
+.v-keywords .kw-insights li::before { content: ""; position: absolute; left: 2px; top: 19px; width: 8px; height: 2px; background: var(--accent); }
+
+.v-keywords .kw-cols { display: grid; gap: 0 var(--s8); }
+@media (min-width: 1000px) { .v-keywords .kw-cols { grid-template-columns: 1fr 1fr; } }
+.v-keywords .kw-cols > section { min-width: 0; }
+.v-keywords .kw-tools { margin-bottom: var(--s3); }
+.v-keywords .kw-ai:not(:empty) { margin-top: var(--s4); }
+
+.v-keywords .kw-saved td.kw-saved-q { font-weight: 500; }
+.v-keywords .kw-sc { font-weight: 600; }
+.v-keywords tr.click:focus-visible { outline-offset: -2px; }
+.v-keywords .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 560px) {
+  .v-keywords .kw-result { padding: var(--s4); }
+  .v-keywords .kw-title h2 { font-size: var(--fs-xl); }
+  .v-keywords .kw-form .search { flex: 1 1 100%; min-width: 0; }
+  .v-keywords .kw-form .btn { flex: 1 1 100%; }
+  .v-keywords .kw-stats { grid-template-columns: 1fr 1fr; }
+  .v-keywords .kw-stats > :last-child:nth-child(odd) { grid-column: 1 / -1; }
+}
+
+/* ============ Аутлаеры ============ */
+.v-trends .tr-form { display: flex; gap: var(--s2); flex-wrap: wrap; align-items: center; }
+.v-trends .tr-form .search { flex: 1; min-width: 220px; }
+.v-trends .tr-form .search input { height: 44px; font-size: var(--fs-l); }
+.v-trends .tr-form .seg { height: 44px; }
+.v-trends .tr-form .seg button { padding: 0 var(--s4); font-family: var(--sans); }
+.v-trends .tr-form .seg button:focus-visible { outline-offset: -3px; }
+.v-trends .tr-form .btn { height: 44px; }
+.v-trends .tr-form select { width: auto; }
+.v-trends .tr-note { margin: var(--s2) 0 0; }
+.v-trends #res { margin-top: var(--s8); }
+.v-trends #res > .section-head:first-child { margin-top: 0; }
+.v-trends .section-head h2 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.v-trends .tr-idle { border: 1px dashed var(--line2); border-radius: var(--radius); padding: var(--s6); color: var(--muted); }
+.v-trends .tr-idle p { margin: 0 0 var(--s5); max-width: 68ch; }
+.v-trends .tr-idle b { color: var(--text); font-weight: 600; }
+.v-trends .tr-legend { display: grid; gap: var(--s2); margin: 0; }
+.v-trends .tr-legend > div { display: flex; gap: var(--s3); align-items: center; }
+.v-trends .tr-legend dt { width: 52px; flex-shrink: 0; }
+.v-trends .tr-legend dd { margin: 0; font-size: var(--fs-s); }
+
+@media (max-width: 560px) {
+  .v-trends .tr-form .search { flex: 1 1 100%; min-width: 0; }
+  .v-trends .tr-form .seg { flex: 1 1 100%; }
+  .v-trends .tr-form .seg button { flex: 1; padding: 0 var(--s2); justify-content: center; }
+  .v-trends .tr-form .btn { flex: 1 1 100%; }
+  .v-trends .tr-idle { padding: var(--s4); }
+}

@@ -1,0 +1,7 @@
+# Единые переводы строк: LF везде, CRLF только для Windows-скриптов
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+*.sh text eol=lf
+*.png binary
+*.woff2 binary

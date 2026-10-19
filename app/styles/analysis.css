@@ -1,0 +1,145 @@
+/* Стили экранов группы: analysis — Анализ видео (.v-video), Аудит канала (.v-channel), Конкуренты (.v-competitors).
+   Только токены темы; раскладка — по ширине самого экрана (container queries), чтобы одинаково работать в боковой панели и во вкладке. */
+
+.v-video, .v-channel, .v-competitors { container-type: inline-size; }
+
+/* ---------- общие: компактная форма «другое видео / канал» ---------- */
+.v-video .vr-form, .v-channel .ch-form, .v-competitors .cp-form { display: flex; flex-wrap: wrap; gap: var(--s2); margin-bottom: var(--s6); }
+.v-video .vr-form .search, .v-channel .ch-form .search, .v-competitors .cp-form .search { flex: 1 1 260px; min-width: 0; }
+.v-video .vr-kw { flex: 1 1 220px; width: auto; height: 42px; }
+.v-channel .ch-form select { width: auto; height: 42px; }
+.v-video .vr-form .btn, .v-channel .ch-form .btn, .v-competitors .cp-form .btn { height: 42px; }
+
+/* компактный режим — когда отчёт уже открыт: тонкая строка, не спорит с заголовком */
+.v-video .vr-form.compact, .v-channel .ch-form.compact { margin-bottom: var(--s6); padding-bottom: var(--s4); border-bottom: 1px solid var(--line); }
+.v-video .compact .search input, .v-channel .compact .search input,
+.v-video .compact .vr-kw, .v-channel .compact select { height: 32px; padding-top: 0; padding-bottom: 0; font-size: var(--fs-s); background: transparent; }
+.v-video .compact .search input, .v-channel .compact .search input { padding-left: 34px; }
+.v-video .compact .search .ic, .v-channel .compact .search .ic { left: 11px; width: 14px; height: 14px; }
+.v-video .compact .btn, .v-channel .compact .btn { height: 32px; padding: 0 12px; font-size: var(--fs-sm); }
+.v-video .compact .vr-kw { flex-basis: 200px; }
+
+/* ==================== Анализ видео ==================== */
+.v-video .vr-head { display: grid; gap: var(--s5); grid-template-columns: 1fr; margin-bottom: var(--s6); }
+.v-video .vr-thumb { position: relative; display: block; aspect-ratio: 16 / 9; border-radius: var(--radius); overflow: hidden; background: var(--panel2); border: 1px solid var(--line); }
+.v-video .vr-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s var(--ease); }
+.v-video a.vr-thumb:hover img { transform: scale(1.02); }
+.v-video .vr-dur { position: absolute; right: var(--s2); bottom: var(--s2); padding: 3px 6px; border-radius: 4px; background: rgba(0, 0, 0, .78); color: #fff; font: 600 var(--fs-sm)/1.2 var(--mono); font-variant-numeric: tabular-nums; }
+.v-video .vr-meta { min-width: 0; display: flex; flex-direction: column; }
+.v-video .vr-meta h1 { font-size: var(--fs-xl); font-weight: 500; line-height: 1.3; margin: var(--s2) 0 var(--s3); overflow-wrap: anywhere; }
+.v-video .vr-ch { display: flex; align-items: center; gap: var(--s2); font-size: var(--fs-s); }
+.v-video .vr-ch .avatar { width: 24px; height: 24px; }
+.v-video .vr-ch b { font-weight: 600; }
+.v-video .vr-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: var(--s5); }
+.v-video .vr-sec { display: flex; flex-wrap: wrap; gap: var(--s2); }
+
+@container (min-width: 720px) {
+  .v-video .vr-head { grid-template-columns: minmax(280px, 44%) 1fr; gap: var(--s6); align-items: start; }
+  .v-video .vr-meta h1 { font-size: var(--fs-2xl); line-height: 1.2; margin-top: var(--s3); }
+  .v-video .vr-meta h1.long { font-size: var(--fs-xl); line-height: 1.3; }
+  /* второстепенные действия — отдельной строкой под главными, отбиты тонкой линией */
+  .v-video .vr-actions { margin-top: auto; padding-top: var(--s5); }
+  .v-video .vr-meta { align-self: stretch; }
+  .v-video .vr-sec { flex-basis: 100%; padding-top: var(--s3); margin-top: var(--s1); border-top: 1px solid var(--line); }
+}
+
+/* полоса: линейка SEO слева, плотный ряд цифр справа */
+.v-video .vr-band { display: grid; grid-template-columns: 1fr; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: var(--s2); }
+.v-video .vr-gauge { padding: var(--s5); border-bottom: 1px solid var(--line); }
+.v-video .vr-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.v-video .vr-stats .stat { background: none; border: 0; border-radius: 0; padding: var(--s3) var(--s4); box-shadow: inset 1px 0 0 var(--line), inset 0 -1px 0 var(--line); }
+.v-video .vr-stats .stat .v { font-size: var(--fs-xl); }
+.v-video .vr-stats .stat .s { font-family: var(--mono); }
+@container (min-width: 520px) { .v-video .vr-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container (min-width: 900px) {
+  .v-video .vr-band { grid-template-columns: minmax(260px, 30%) 1fr; }
+  .v-video .vr-gauge { border-bottom: 0; border-right: 1px solid var(--line); display: flex; flex-direction: column; justify-content: center; }
+  .v-video .vr-stats .stat { padding: var(--s4) var(--s5); }
+}
+.v-video .vr-stats .stat { margin: 0 0 -1px -1px; } /* схлопывает внешние линии сетки к рамке полосы */
+.v-video .vr-stats { overflow: hidden; border-radius: 0 0 var(--radius) var(--radius); }
+.v-video .hot { color: var(--accent); }
+
+.v-video .vr-note { font-size: var(--fs-sm); color: var(--muted); }
+.v-video .checklist li.ok span { text-decoration: none; }
+.v-video #tags .chips + div { margin-top: var(--s3) !important; }
+
+.v-video .vr-cols { display: grid; gap: 0 var(--s8); grid-template-columns: 1fr; }
+@container (min-width: 900px) { .v-video .vr-cols { grid-template-columns: minmax(260px, 2fr) 3fr; } }
+.v-video .vr-rank { display: flex; gap: var(--s2); }
+.v-video .vr-rank input { flex: 1; min-width: 0; }
+.v-video .vr-rank-out { display: flex; align-items: center; gap: var(--s4); margin-top: var(--s4); min-height: 48px; }
+.v-video .vr-rank-out .loading { padding: 0; }
+.v-video .vr-pos { font: 700 var(--fs-3xl)/1 var(--display); letter-spacing: -.03em; }
+.v-video .vr-desc { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; padding: var(--s4) var(--s5); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-s); font-size: var(--fs-s); line-height: 1.6; }
+
+.v-video .vr-err .page-head { margin-bottom: var(--s4); }
+
+/* ==================== Аудит канала ==================== */
+.v-channel .ch-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s4) var(--s5); margin-bottom: var(--s6); }
+.v-channel .ch-ava { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; background: var(--panel2); border: 1px solid var(--line); flex-shrink: 0; }
+.v-channel .ch-id { flex: 1; min-width: 0; }
+.v-channel .ch-id h1 { margin: var(--s2) 0 var(--s1); overflow-wrap: anywhere; }
+.v-channel .ch-meta { font-size: var(--fs-sm); color: var(--muted); }
+.v-channel .ch-actions { display: flex; flex-wrap: wrap; gap: var(--s2); flex-basis: 100%; }
+@container (min-width: 760px) { .v-channel .ch-actions { flex-basis: auto; } .v-channel .ch-ava { width: 72px; height: 72px; } }
+
+/* крупные цифры — Unbounded; разделены отрезками линейки */
+.v-channel .ch-heroes { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); border-top: 1px solid var(--line); }
+.v-channel .ch-hero { padding: var(--s5) var(--s5) var(--s5) 0; position: relative; }
+.v-channel .ch-hero::before { content: ""; position: absolute; left: 0; top: -1px; width: 1px; height: 8px; background: var(--muted); }
+.v-channel .ch-hero .hero-num { font-size: var(--fs-2xl); }
+.v-channel .ch-hero .l { margin-top: var(--s2); font-size: var(--fs-sm); color: var(--muted); }
+.v-channel .ch-hero .s { font: 400 var(--fs-xs) var(--mono); color: var(--muted); }
+@container (min-width: 720px) { .v-channel .ch-hero .hero-num { font-size: var(--fs-3xl); } }
+
+.v-channel .ch-band { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.v-channel .ch-band .stat { background: none; border: 0; border-radius: 0; padding: var(--s3) var(--s4); margin: 0 0 -1px -1px; box-shadow: inset 1px 0 0 var(--line), inset 0 -1px 0 var(--line); }
+.v-channel .ch-band .stat .v { font-size: var(--fs-l); }
+
+.v-channel .ch-cols { display: grid; gap: 0 var(--s8); grid-template-columns: 1fr; }
+@container (min-width: 900px) { .v-channel .ch-cols { grid-template-columns: 1fr minmax(380px, 1.1fr); } }
+.v-channel .ch-note-inline { font-size: var(--fs-sm); color: var(--muted); }
+
+.v-channel .ch-tips { list-style: none; margin: 0 0 var(--s5); padding: 0; }
+.v-channel .ch-tips li { position: relative; padding: var(--s2) 0 var(--s2) var(--s5); border-bottom: 1px dashed var(--line); line-height: 1.5; }
+.v-channel .ch-tips li::before { content: ""; position: absolute; left: 2px; top: calc(var(--s2) + .55em); width: 8px; height: 2px; background: var(--accent); }
+
+/* тепловая карта: 5 ступеней акцента поверх панели — читается в тёмных и светлых темах */
+.v-channel .ch-heat { display: grid; grid-template-columns: 28px repeat(8, minmax(0, 1fr)); gap: 3px; font: 500 var(--fs-xs)/1 var(--mono); }
+.v-channel .ch-heat > div { display: grid; place-items: center; min-height: 30px; border-radius: 4px; font-variant-numeric: tabular-nums; }
+.v-channel .ch-heat .h { color: var(--muted); font: 400 10px/1 var(--mono); min-height: 18px; }
+.v-channel .ch-heat > .h:nth-child(9n + 1) { font-family: var(--sans); font-size: var(--fs-xs); justify-items: start; }
+.v-channel .q0 { background: color-mix(in srgb, var(--accent) 10%, var(--panel2)); color: var(--text); }
+.v-channel .q1 { background: color-mix(in srgb, var(--accent) 24%, var(--panel2)); color: var(--text); }
+.v-channel .q2 { background: color-mix(in srgb, var(--accent) 40%, var(--panel2)); color: var(--text); }
+.v-channel .q3 { background: color-mix(in srgb, var(--accent) 87%, var(--panel2)); color: var(--accent-ink); }
+.v-channel .q4 { background: var(--accent); color: var(--accent-ink); }
+.v-channel .ch-heat .e, .v-channel .ch-legend i.e { background: color-mix(in srgb, var(--panel2) 55%, transparent); }
+.v-channel .ch-heat .best { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--text); font-weight: 700; }
+.v-channel .ch-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); margin-top: var(--s4); font-size: var(--fs-xs); color: var(--muted); }
+.v-channel .ch-legend > span, .v-channel .ch-scale > span { display: inline-flex; align-items: center; gap: 5px; }
+.v-channel .ch-scale { display: inline-flex; flex-wrap: wrap; gap: var(--s1) var(--s3); }
+.v-channel .ch-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; }
+.v-channel .ch-legend i.best { box-shadow: inset 0 0 0 2px var(--text); }
+.v-channel .ch-note { margin: var(--s3) 0 0; font-size: var(--fs-sm); color: var(--muted); max-width: 64ch; }
+.v-channel .ch-note b { color: var(--text); font-weight: 600; }
+
+/* ==================== Конкуренты ==================== */
+.v-competitors .cp-form { margin-bottom: var(--s2); }
+.v-competitors .cp-mine-toggle { font-size: var(--fs-s); color: var(--muted); margin: 0 0 var(--s2); }
+.v-competitors .cp-note { font-size: var(--fs-sm); color: var(--muted); }
+.v-competitors .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.v-competitors .cp-ch { display: flex; align-items: center; gap: var(--s3); min-width: 200px; }
+.v-competitors .cp-ch a { color: var(--text); font-weight: 500; }
+.v-competitors .cp-ch .avatar { width: 32px; height: 32px; flex-shrink: 0; }
+.v-competitors tr.cp-mine td { background: var(--accent-soft); }
+.v-competitors tr.cp-mine td:first-child { box-shadow: inset 2px 0 0 var(--accent); }
+.v-competitors tr.cp-mine:hover td { background: color-mix(in srgb, var(--accent) 18%, var(--panel)); }
+/* медиана: значение и тонкая шкала относительно лучшего канала */
+.v-competitors .cp-med { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 5px; min-width: 72px; }
+.v-competitors .cp-med i { display: block; width: 72px; height: 2px; background: linear-gradient(var(--accent), var(--accent)) right / var(--w) 100% no-repeat, var(--line); }
+@container (max-width: 640px) {
+  .v-video .vr-form .vr-url, .v-channel .ch-form .search { flex-basis: 100%; }
+  .v-video .vr-kw { flex: 1 1 0; }
+}

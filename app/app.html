@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TubeLens</title>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="styles/overview.css">
+  <link rel="stylesheet" href="styles/analysis.css">
+  <link rel="stylesheet" href="styles/studio.css">
+  <script src="boot.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#/dashboard"><img src="../icons/icon32.png" alt=""><span class="word">TubeLens</span></a>
+    <form class="cmd" id="cmd" role="search"><span id="cmdIc"></span><input id="cmdInput" autocomplete="off" aria-label="Ссылка на видео, канал или запрос" placeholder="Ссылка на видео, @канал или запрос"><kbd>/</kbd></form>
+    <span class="spacer"></span>
+    <button id="themeBtn" class="icon-btn" title="Тема оформления" aria-label="Тема оформления"></button>
+    <span id="quota" class="muted small mono" title="Использовано единиц квоты YouTube API сегодня"></span>
+    <button id="fullBtn" class="icon-btn" title="Открыть во вкладке"></button>
+  </header>
+  <div class="layout">
+    <nav id="nav"></nav>
+    <main id="view"></main>
+  </div>
+  <div id="toast"></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
