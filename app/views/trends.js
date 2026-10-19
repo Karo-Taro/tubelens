@@ -25,7 +25,7 @@ export async function render(root, params) {
       go('trends', { mode, region: $('#region', form).value, cat: $('#cat', form).value });
     });
     const vids = await withLoading(res, 'Загружаю тренды…', () => mostPopular(region, cat));
-    if (vids) videoTable(res, vids.map((v) => ({ ...v, vph: vph(v), eng: engagement(v) })), ['video', 'views', 'vph', 'eng', 'dur']);
+    if (vids) videoTable(res, vids.map((v) => ({ ...v, vph: vph(v), eng: engagement(v) })), ['video', 'views', 'vph', 'eng', 'dur'], undefined, { csvName: 'tubelens-trending' });
     return;
   }
 
@@ -66,5 +66,5 @@ export async function render(root, params) {
   }
   const hot = vids.filter((v) => v.ratio >= 3).length;
   res.innerHTML = `<div class="section-head"><h2>«${esc(q)}» · ${label}</h2><span class="muted small mono">${vids.length} видео${hot ? ` · ${hot} ×3+` : ''}</span></div><div id="tbl"></div>`;
-  videoTable($('#tbl', res), vids, ['video', 'views', 'subs', 'ratio', 'vph', 'eng']);
+  videoTable($('#tbl', res), vids, ['video', 'views', 'subs', 'ratio', 'vph', 'eng'], undefined, { csvName: 'tubelens-outliers' });
 }

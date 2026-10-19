@@ -111,7 +111,7 @@ async function analyze(root, q) {
   const tagsEl = $('#tags', res);
   if (r.tags.length) tagsEl.append(chips(r.tags.map((t) => ({ text: t.tag, count: t.count })), { copyAll: true }));
   else tagsEl.innerHTML = '<p class="muted small">У видео в топе нет открытых тегов.</p>';
-  videoTable($('#top', res), r.videos, ['video', 'views', 'vph', 'subs', 'eng']);
+  videoTable($('#top', res), r.videos, ['video', 'views', 'vph', 'subs', 'eng'], undefined, { csvName: 'tubelens-keyword-top' });
 
   $('#deep', res).addEventListener('click', async (e) => {
     e.currentTarget.disabled = true;

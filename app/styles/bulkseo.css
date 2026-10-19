@@ -1,1 +1,113 @@
-/* Стили раздела «SEO моего канала» (.v-bulkseo) */
+/* Стили раздела «SEO моего канала» (.v-bulkseo). Только токены темы; раскладка — по ширине самого экрана (container queries). */
+
+.v-bulkseo { container-type: inline-size; }
+.v-bulkseo .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- шапка: канал + «Проверено N ч назад · Обновить» ---------- */
+.v-bulkseo .page-head .lead { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s1) var(--s3); }
+.v-bulkseo .bs-ch { display: inline-flex; align-items: center; gap: var(--s2); color: var(--text); }
+.v-bulkseo .bs-ch img { width: 22px; height: 22px; border-radius: 50%; background: var(--panel2); object-fit: cover; }
+.v-bulkseo .bs-ch b { font-weight: 600; }
+.v-bulkseo .bs-when { font-size: var(--fs-s); }
+.v-bulkseo .bs-link { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; }
+.v-bulkseo .bs-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.v-bulkseo .bs-n { width: auto; height: 38px; padding-top: 0; padding-bottom: 0; }
+
+/* ---------- пустое состояние ---------- */
+.v-bulkseo .bs-empty { display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
+.v-bulkseo .bs-empty h2 { margin: 0; color: var(--text); font-size: var(--fs-l); }
+.v-bulkseo .bs-empty p { margin: 0; max-width: 56ch; }
+.v-bulkseo .bs-empty-ic { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+.v-bulkseo .bs-pick { display: flex; flex-wrap: wrap; gap: var(--s2); width: 100%; max-width: 520px; margin: var(--s3) 0 var(--s1); }
+.v-bulkseo .bs-pick .search { flex: 1 1 240px; min-width: 0; text-align: left; }
+.v-bulkseo .bs-pick .btn { height: 42px; }
+.v-bulkseo #pickErr:not(:empty) { width: 100%; max-width: 520px; text-align: left; }
+.v-bulkseo .bs-center { justify-content: center; margin-top: var(--s3); }
+.v-bulkseo .bs-center select { width: auto; }
+.v-bulkseo .bs-retry { margin-top: var(--s3); }
+
+/* ---------- прогресс ---------- */
+.v-bulkseo .bs-progress { max-width: 640px; }
+.v-bulkseo .bs-prog-top { display: flex; align-items: center; justify-content: space-between; gap: var(--s3); }
+.v-bulkseo .bs-prog-t { font-size: var(--fs-l); }
+.v-bulkseo .bs-prog-t b { font-weight: 600; }
+.v-bulkseo .bs-progress .bar { margin: var(--s3) 0 var(--s2); }
+
+/* ---------- сводка ---------- */
+.v-bulkseo .bs-summary { display: grid; gap: var(--s3); grid-template-columns: 1fr; }
+.v-bulkseo .bs-summary .card { margin: 0; }
+.v-bulkseo .bs-stats { display: grid; gap: var(--s2); grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: var(--s5); }
+.v-bulkseo .bs-stats .stat { padding: var(--s2) var(--s3); }
+.v-bulkseo .bs-stats .stat .v { font-size: var(--fs-xl); }
+.v-bulkseo .bs-dist h3 { margin-bottom: var(--s4); }
+.v-bulkseo .bs-dist p { margin: var(--s3) 0 0; }
+
+.v-bulkseo .bs-bands { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--s2); }
+.v-bulkseo .bs-bands li { --c: var(--muted); display: grid; grid-template-columns: 56px 1fr 32px; align-items: center; gap: var(--s3); }
+.v-bulkseo .bs-bands li.top { --c: var(--good); }
+.v-bulkseo .bs-bands li.good { --c: color-mix(in srgb, var(--good) 60%, var(--mid)); }
+.v-bulkseo .bs-bands li.mid { --c: var(--mid); }
+.v-bulkseo .bs-bands li.bad { --c: var(--bad); }
+.v-bulkseo .bs-band-t { font-size: var(--fs-sm); color: var(--muted); }
+.v-bulkseo .bs-band-bar { height: 12px; border-radius: 3px; background: var(--panel2); overflow: hidden; }
+.v-bulkseo .bs-band-bar i { display: block; height: 100%; min-width: 2px; background: var(--c); border-radius: 3px; transition: width .5s var(--ease); }
+.v-bulkseo .bs-band-n { text-align: right; font-weight: 600; }
+
+/* ---------- частые проблемы и быстрые победы ---------- */
+.v-bulkseo .bs-cols { display: grid; grid-template-columns: 1fr; gap: 0 var(--s8); }
+.v-bulkseo .bs-problems { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.v-bulkseo .bs-prob { display: grid; gap: 6px; width: 100%; padding: var(--s2) var(--s3); background: none; border: 1px solid transparent; border-radius: var(--radius-s); color: var(--text); font: inherit; font-size: var(--fs-s); text-align: left; cursor: pointer; transition: background-color .15s, border-color .15s; }
+.v-bulkseo .bs-prob:hover { background: var(--panel); border-color: var(--line); }
+.v-bulkseo .bs-prob[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.v-bulkseo .bs-prob-t b { color: var(--text); font-weight: 600; }
+.v-bulkseo .bs-prob-bar { height: 4px; border-radius: 2px; background: var(--panel2); overflow: hidden; }
+.v-bulkseo .bs-prob-bar i { display: block; height: 100%; background: var(--bad); border-radius: 2px; }
+
+.v-bulkseo .bs-wins { list-style: none; margin: 0 0 var(--s2); padding: 0; display: grid; gap: var(--s2); }
+.v-bulkseo .bs-wins li { display: flex; gap: var(--s3); align-items: flex-start; padding: var(--s3); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-s); }
+.v-bulkseo .bs-wins b { font-weight: 600; }
+.v-bulkseo .bs-win-gain { flex-shrink: 0; min-width: 44px; padding: 3px 6px; border-radius: 5px; background: var(--good-soft); color: var(--good); font-weight: 600; font-size: var(--fs-s); text-align: center; }
+
+/* ---------- фильтры и таблица ---------- */
+.v-bulkseo .bs-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: var(--s3); }
+.v-bulkseo .bs-f[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.v-bulkseo .bs-f[aria-pressed="true"] b { color: var(--accent); }
+.v-bulkseo .bs-f .ic { margin-left: 2px; }
+
+.v-bulkseo .bs-table td { vertical-align: middle; }
+.v-bulkseo .bs-row[aria-expanded="true"] td { background: var(--panel2); border-bottom-color: transparent; }
+.v-bulkseo .bs-score { display: inline-block; min-width: 36px; padding: 3px 7px; border-radius: 5px; font: 600 var(--fs-s)/1.3 var(--mono); text-align: center; }
+.v-bulkseo .bs-score.good { background: var(--good-soft); color: var(--good); }
+.v-bulkseo .bs-score.mid { background: color-mix(in srgb, var(--mid) 16%, transparent); color: var(--mid); }
+.v-bulkseo .bs-score.bad { background: var(--bad-soft); color: var(--bad); }
+.v-bulkseo .bs-fails { display: flex; flex-wrap: wrap; gap: 4px; max-width: 320px; }
+.v-bulkseo .bs-fails span { padding: 2px 7px; border-radius: 5px; background: var(--panel2); color: var(--text); font-size: var(--fs-sm); white-space: nowrap; }
+.v-bulkseo .bs-fails .more { color: var(--muted); }
+.v-bulkseo .bs-fix { white-space: nowrap; }
+.v-bulkseo .bs-mviews { display: none; }
+.v-bulkseo .bs-detail td { background: var(--panel2); padding-top: 0; }
+.v-bulkseo .bs-detail-in { padding: var(--s2) 0 var(--s2); }
+.v-bulkseo .bs-detail-h { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--s2); margin-bottom: var(--s2); }
+.v-bulkseo .bs-detail-h a { display: inline-flex; align-items: center; gap: 4px; }
+.v-bulkseo .bs-detail .checklist { font-size: var(--fs-s); }
+
+@container (min-width: 760px) {
+  .v-bulkseo .bs-summary { grid-template-columns: 1.15fr 1fr; }
+  .v-bulkseo .bs-cols { grid-template-columns: 1.2fr 1fr; }
+}
+
+/* узкая боковая панель: просмотры — в подписи, без колонки проблем, кнопка — иконкой */
+@container (max-width: 640px) {
+  .v-bulkseo .bs-c-fails, .v-bulkseo .bs-c-views { display: none; }
+  .v-bulkseo .bs-mviews { display: inline; }
+  .v-bulkseo .bs-table th, .v-bulkseo .bs-table td { padding: 8px 10px; }
+  .v-bulkseo .vcell { min-width: 0; gap: var(--s2); }
+  .v-bulkseo .vcell img { width: 64px; }
+  .v-bulkseo .bs-fix { width: 30px; padding: 0; }
+  .v-bulkseo .bs-fix span { display: none; }
+  .v-bulkseo .bs-stats .stat .v { font-size: var(--fs-l); }
+  .v-bulkseo .page-head > .row { width: 100%; }
+}
+@container (max-width: 420px) {
+  .v-bulkseo .vcell img { display: none; }
+}

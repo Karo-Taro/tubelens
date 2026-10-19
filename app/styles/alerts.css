@@ -1,1 +1,51 @@
-/* Стили раздела «Уведомления» (.v-alerts) */
+/* Стили раздела «Уведомления» (.v-alerts). Только токены из app.css / themes.js. */
+
+/* расписание и разрешения */
+.v-alerts .al-sched-row { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; }
+.v-alerts .al-master { flex: 1 1 260px; margin: 0; align-items: flex-start; }
+.v-alerts .al-master input { margin-top: 3px; }
+.v-alerts .al-master > span { display: flex; flex-direction: column; gap: 2px; }
+.v-alerts #al-int { width: auto; min-width: 170px; }
+.v-alerts .al-status { display: flex; align-items: center; gap: var(--s2) var(--s4); flex-wrap: wrap; margin-top: var(--s4); padding-top: var(--s3); border-top: 1px dashed var(--line); }
+.v-alerts .al-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.v-alerts .al-pill.ok { background: var(--good-soft); color: var(--good); }
+.v-alerts #al-perm-msg .notice { margin: var(--s3) 0 0; }
+
+/* правила */
+.v-alerts .al-rule { padding: var(--s4); }
+.v-alerts .al-rule.off .al-rule-t, .v-alerts .al-rule.off .al-ic { opacity: .5; }
+.v-alerts .al-rule-head { display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.v-alerts .al-ic { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 8px; background: var(--accent-soft); color: var(--accent); }
+.v-alerts .al-rule-t { flex: 1 1 220px; min-width: 0; }
+.v-alerts .al-rule-t .muted { overflow-wrap: anywhere; }
+.v-alerts .al-meta .bad { color: var(--bad); }
+.v-alerts .al-toggle { margin: 0; gap: 6px; }
+.v-alerts .al-found:not(:empty) { margin-top: var(--s3); padding-top: var(--s3); border-top: 1px solid var(--line); }
+.v-alerts .al-found .loading { padding: var(--s3) 0; }
+
+/* список находок и история */
+.v-alerts .al-list { list-style: none; margin: var(--s2) 0 0; padding: 0; }
+.v-alerts .al-list li + li { border-top: 1px solid var(--line); }
+.v-alerts .al-list a { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s1); color: var(--text); border-radius: var(--radius-s); }
+.v-alerts .al-list a:hover { background: var(--panel2); text-decoration: none; }
+.v-alerts .al-list img { width: 96px; aspect-ratio: 16 / 9; object-fit: cover; border-radius: var(--radius-s); background: var(--panel2); flex-shrink: 0; }
+.v-alerts .al-li-t { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.v-alerts .al-li-t b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.v-alerts .al-msg { white-space: pre-line; }
+.v-alerts .al-badges { display: flex; gap: var(--s1); flex-wrap: wrap; justify-content: flex-end; max-width: 40%; }
+.v-alerts .al-when { white-space: nowrap; flex-shrink: 0; }
+.v-alerts .al-hist { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: var(--s1) var(--s3); margin: 0; }
+
+/* форма */
+.v-alerts .al-types { flex-wrap: wrap; max-width: 100%; }
+.v-alerts .al-help { margin: var(--s3) 0 0; max-width: 75ch; }
+.v-alerts .al-grid { display: grid; gap: 0 var(--s3); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); align-items: end; }
+.v-alerts .al-form textarea { min-height: 72px; }
+.v-alerts .al-actions { margin-top: var(--s4); }
+
+@media (max-width: 520px) {
+  .v-alerts .al-list img { width: 72px; }
+  .v-alerts .al-badges { display: none; }
+  .v-alerts .al-types button { flex: 1 1 50%; justify-content: center; }
+  .v-alerts .al-types button + button { border-left: 0; }
+}

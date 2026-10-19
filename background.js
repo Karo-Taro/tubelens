@@ -8,6 +8,7 @@ import { ask } from './lib/ai.js';
 import { SYSTEM } from './lib/prompts.js';
 import { THEMES } from './app/themes.js';
 import * as dl from './lib/downloader.js';
+import * as alerts from './lib/alerts.js';
 
 chrome.runtime.onInstalled.addListener((info) => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
@@ -272,7 +273,49 @@ const handlers = {
   thumb: ({ id, title }) => dl.downloadThumbnail(id, title),
 
   open: ({ route }) => chrome.tabs.create({ url: chrome.runtime.getURL('app/app.html?tab=1#/' + (route || '')) }),
+
+  // ---- уведомления (lib/alerts.js) ----
+  // id — проверить одно правило «вхолостую» (без уведомлений); без id — все включённые, как по расписанию
+  alertsRunNow: ({ id }) => alerts.runChecks(id ? { id, dry: true } : {}),
+  alertsSchedule: ({ minutes, enabled }) => alerts.schedule({ minutes, enabled }).then((r) => (attachAlertListeners(), r)),
+  alertsStatus: () => alerts.status(),
+  alertsRead: () => alerts.markRead(),
 };
+
+// ---- уведомления: расписание (chrome.alarms) и клики (chrome.notifications) ----
+// Оба API — опциональные разрешения: до выдачи chrome.alarms / chrome.notifications не существуют.
+// Слушатели вешаем синхронно при старте (если API есть) и повторно — когда разрешение выдано.
+let alertListeners = { alarms: false, notifications: false };
+function attachAlertListeners() {
+  if (chrome.alarms?.onAlarm && !alertListeners.alarms) {
+    alertListeners.alarms = true;
+    chrome.alarms.onAlarm.addListener((a) => {
+      if (a.name === alerts.ALARM) alerts.runChecks().catch((e) => console.warn('[TubeLens] уведомления:', e));
+    });
+  }
+  if (chrome.notifications?.onClicked && !alertListeners.notifications) {
+    alertListeners.notifications = true;
+    chrome.notifications.onClicked.addListener(async (nid) => {
+      if (!nid.startsWith('tl-alert-')) return;
+      const url = await alerts.urlForNotification(nid);
+      if (url) chrome.tabs.create({ url });
+      chrome.notifications.clear(nid);
+    });
+  }
+}
+attachAlertListeners();
+
+// Будильники переживают перезапуск service worker, но не всегда — переустановку/обновление; восстанавливаем
+async function restoreAlertsAlarm() {
+  const cfg = await alerts.getConfig();
+  if (!cfg.enabled || !chrome.alarms || !(await alerts.hasPerms())) return;
+  if (!(await chrome.alarms.get(alerts.ALARM))) await alerts.schedule({});
+}
+chrome.runtime.onInstalled.addListener(() => restoreAlertsAlarm().catch(() => {}));
+chrome.runtime.onStartup.addListener(() => restoreAlertsAlarm().catch(() => {}));
+chrome.permissions?.onAdded?.addListener(() => { attachAlertListeners(); restoreAlertsAlarm().catch(() => {}); });
+chrome.permissions?.onRemoved?.addListener(() => alerts.getConfig().then((c) => c.enabled && chrome.alarms?.clear(alerts.ALARM)).catch(() => {}));
+chrome.storage.local.get('alertUnread').then((r) => alerts.setBadge(r.alertUnread || 0)).catch(() => {});
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   const fn = handlers[msg?.type];

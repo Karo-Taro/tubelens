@@ -69,5 +69,5 @@ async function load(root) {
     await setData('competitors', (await getData('competitors', [])).filter((x) => x !== a.dataset.del));
     load(root);
   }));
-  videoTable($('#feed', res), data.feed.slice(0, 60), ['video', 'views', 'vph', 'out', 'eng']);
+  videoTable($('#feed', res), data.feed.slice(0, 60), ['video', 'views', 'vph', 'out', 'eng'], undefined, { csvName: 'tubelens-competitors-feed' });
 }

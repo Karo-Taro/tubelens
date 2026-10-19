@@ -160,3 +160,102 @@ html[dark] .tl-panel.tl-side { box-shadow: 0 10px 34px rgba(0, 0, 0, .55); --tl-
   .tl-side *, .tl-side, .tl-pill { transition: none !important; animation: none !important; }
   .tl-side.tl-min .tl-tab:hover { transform: none; }
 }
+
+/* ---------- watch page scorecard (#tl-watch) ---------- */
+#tl-watch { --tl-line2: #c9c9d2; --tl-accent-soft: rgba(217, 138, 18, .14); }
+html[dark] #tl-watch { --tl-line2: #3d4760; --tl-accent-soft: rgba(242, 169, 59, .16); }
+#tl-watch .tl-head { gap: 8px; padding: 7px 8px 7px 12px; border-bottom: 1px solid var(--tl-line); }
+#tl-watch.tl-collapsed .tl-head { border-bottom: 0; }
+#tl-watch .tl-head > b { white-space: nowrap; }
+#tl-watch .tl-tabs { margin-left: 2px; }
+#tl-watch .tl-tabs button:disabled { opacity: .45; cursor: default; }
+#tl-watch .tl-x { border-radius: 6px; padding: 4px; }
+#tl-watch .tl-x:hover { background: var(--tl-line); color: var(--tl-text); }
+#tl-watch .tl-x:focus-visible, #tl-watch .tl-btn:focus-visible, #tl-watch .tl-tag:focus-visible, #tl-watch .tl-select:focus-visible,
+#tl-watch .tl-wpane:focus-visible, #tl-watch summary:focus-visible { outline: 2px solid var(--tl-accent); outline-offset: 1px; }
+#tl-watch .tl-body { padding: 12px; }
+#tl-watch .tl-sub { margin: 12px 0 6px; gap: 8px; }
+#tl-watch .tl-sub > span { min-width: 0; }
+#tl-watch .tl-actions { margin-top: 12px; }
+#tl-watch a.tl-btn { text-decoration: none; }
+#tl-watch .tl-tag { font-family: inherit; line-height: 1.5; }
+
+/* score */
+.tl-wscore { display: flex; align-items: center; gap: 14px; }
+.tl-wnum { display: flex; align-items: baseline; gap: 2px; flex-shrink: 0; }
+.tl-wnum b { font: 800 34px/1 "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; letter-spacing: -1px; }
+.tl-wnum small { color: var(--tl-muted); font-size: 12px; }
+.tl-wscore-r { flex: 1; min-width: 0; }
+.tl-wverd { font-weight: 600; margin-bottom: 7px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-wverd .tl-muted { font-weight: 400; }
+.tl-ruler { position: relative; height: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, #dc2626 0 40%, #ca8a04 40% 60%, #16a34a 60% 100%); opacity: .9; }
+.tl-ruler i { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%;
+  background: var(--tl-bg); border: 3px solid var(--tl-text); box-sizing: border-box; }
+.tl-ruler-l { position: relative; height: 13px; margin-top: 3px; font: 10px/13px "Cascadia Mono", Consolas, monospace; color: var(--tl-muted); }
+.tl-ruler-l span { position: absolute; transform: translateX(-50%); }
+.tl-ruler-l span:nth-child(1) { left: 0; transform: none; } .tl-ruler-l span:nth-child(2) { left: 40%; }
+.tl-ruler-l span:nth-child(3) { left: 60%; } .tl-ruler-l span:nth-child(4) { right: 0; transform: none; }
+.tl-wline { margin: 10px 0; padding: 7px 10px; border-radius: 8px; background: var(--tl-bg2); border-left: 3px solid var(--tl-line2); font-weight: 600; }
+.tl-wline.good { border-left-color: #16a34a; } .tl-wline.mid { border-left-color: #ca8a04; } .tl-wline.bad { border-left-color: #dc2626; }
+#tl-watch .tl-wline.good, #tl-watch .tl-wline.mid, #tl-watch .tl-wline.bad { color: var(--tl-text); }
+.tl-wline .tl-muted { font-weight: 400; }
+
+/* stat grid */
+.tl-wgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.tl-wgrid.tl-wgrid3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.tl-wgrid > div { background: var(--tl-bg2); border-radius: 8px; padding: 6px 7px; min-width: 0; }
+.tl-wgrid b { display: block; font: 700 15px/1.3 "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tl-wgrid small { display: block; color: var(--tl-muted); font-size: 11px; line-height: 1.25; overflow-wrap: break-word; }
+/* узкая колонка (YouTube сужает #secondary на средних окнах) */
+#tl-watch { container-type: inline-size; }
+@container (max-width: 400px) {
+  #tl-watch .tl-head > b { display: none; }
+  #tl-watch .tl-tabs button { padding: 3px 4px; }
+  .tl-wgrid > div { padding: 5px 6px; }
+  .tl-wgrid b { font-size: 13.5px; }
+  .tl-wgrid small { font-size: 10px; }
+}
+@container (max-width: 330px) {
+  .tl-wgrid, .tl-wgrid.tl-wgrid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tl-wnum b { font-size: 28px; }
+}
+
+/* SEO */
+.tl-wlabel { display: block; font-weight: 600; margin-bottom: 6px; }
+.tl-wkwrow { flex-wrap: wrap; }
+.tl-input { flex: 1 1 140px; min-width: 0; background: var(--tl-bg); color: var(--tl-text); border: 1px solid var(--tl-line); border-radius: 8px;
+  padding: 5px 8px; font: 13px Roboto, Arial, sans-serif; }
+.tl-input::placeholder { color: var(--tl-muted); }
+.tl-input:focus { outline: none; border-color: var(--tl-accent); box-shadow: 0 0 0 2px var(--tl-accent-soft); }
+.tl-wkwres:not(:empty) { margin-top: 8px; }
+.tl-wkwbox { padding: 8px; border: 1px solid var(--tl-line); border-radius: 10px; }
+.tl-wkwq { margin-bottom: 6px; font-size: 12px; }
+.tl-wcheck li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; border-bottom: 1px solid var(--tl-line); }
+.tl-wcheck li:last-child { border-bottom: 0; }
+.tl-wcheck li::before { flex-shrink: 0; }
+.tl-wcheck li span { flex: 1; min-width: 0; }
+.tl-wcheck li small { color: var(--tl-muted); font: 10px "Cascadia Mono", Consolas, monospace; }
+.tl-wcheck li.ok span { color: var(--tl-muted); }
+.tl-wcnt { font: 11px "Cascadia Mono", Consolas, monospace; font-weight: 400; }
+.tl-wdesc { margin-top: 8px; }
+.tl-wdesc summary { font-weight: 500; color: var(--tl-muted); }
+.tl-wdesc-t { white-space: pre-wrap; word-break: break-word; max-height: 240px; overflow: auto; background: var(--tl-bg2); border-radius: 8px; padding: 8px 10px; font-size: 12px; line-height: 1.5; }
+
+/* channel */
+.tl-wava { width: 56px; height: 56px; border-radius: 50%; background: var(--tl-bg2); flex-shrink: 0; }
+.tl-wbars { display: grid; gap: 6px; margin-top: 10px; }
+.tl-wbar { display: grid; grid-template-columns: 72px 1fr 52px; align-items: center; gap: 8px; font-size: 12px; }
+.tl-wbar span { color: var(--tl-muted); }
+.tl-wbar i { height: 8px; border-radius: 999px; background: var(--tl-bg2); overflow: hidden; }
+.tl-wbar em { display: block; height: 100%; border-radius: 999px; background: var(--tl-line2); }
+.tl-wbar em.tl-wbar-v { background: var(--tl-accent); }
+.tl-wbar b { text-align: right; font: 600 12px "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
+
+/* AI */
+.tl-wnote { font-size: 12px; }
+#tl-watch .tl-waiacts { margin-top: 8px; }
+.tl-waibox .tl-sub { margin-top: 12px; }
+.tl-waibox .tl-row { flex-wrap: nowrap; }
+#tl-watch .tl-ai-out { max-height: 360px; overflow: auto; margin-top: 0; }
+#tl-watch .tl-ai-out.tl-err { color: #e5484d; }

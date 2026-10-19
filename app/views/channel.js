@@ -106,9 +106,9 @@ async function audit(res, q, n) {
     ${section('Топ видео', 'по просмотрам')}<div id="top"></div>
     ${section('Все загруженные', `<span class="mono">${a.videos.length}</span>`)}<div id="all"></div>`;
 
-  if (a.outliers.length) videoTable($('#outs', res), a.outliers, ['video', 'views', 'out', 'vph', 'eng']);
-  videoTable($('#top', res), a.top, ['video', 'views', 'out', 'eng']);
-  videoTable($('#all', res), a.videos, ['video', 'date', 'views', 'vph', 'eng', 'out', 'dur']);
+  if (a.outliers.length) videoTable($('#outs', res), a.outliers, ['video', 'views', 'out', 'vph', 'eng'], undefined, { csvName: 'tubelens-channel-outliers' });
+  videoTable($('#top', res), a.top, ['video', 'views', 'out', 'eng'], undefined, { csvName: 'tubelens-channel-top' });
+  videoTable($('#all', res), a.videos, ['video', 'date', 'views', 'vph', 'eng', 'out', 'dur'], undefined, { csvName: 'tubelens-channel-videos' });
 
   $('#setMine', res).addEventListener('click', async () => { await saveSettings({ myChannel: c.id }); toast('Сохранено как ваш канал'); });
   $('#addComp', res).addEventListener('click', async () => {

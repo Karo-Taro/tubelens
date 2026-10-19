@@ -81,66 +81,360 @@
     return e.message;
   }
 
-  // ---------- страница видео ----------
+  // ---------- страница видео: панель-скоркарта с вкладками ----------
+  const WTAB_KEY = 'tl-watch-tab';
+  const WCOLL_KEY = 'tl-watch-collapsed';
+  const lsGet = (k) => { try { return localStorage.getItem(k); } catch { return null; } };
+  const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch { /* хранилище недоступно */ } };
+  const WTABS = [['overview', 'Обзор'], ['seo', 'SEO'], ['channel', 'Канал'], ['ai', 'AI']];
+  const LANGS = ['English', 'Español', 'Português', 'Deutsch', 'Français', 'Українська', 'Русский', 'हिन्दी', 'Bahasa Indonesia', 'Türkçe'];
+  const full = (n) => (n == null || !isFinite(n) ? '—' : Math.round(n).toLocaleString('ru'));
+  const xFmt = (x) => String(x >= 10 ? Math.round(x) : x >= 1 ? x.toFixed(1) : x.toFixed(2));
+  const dur = (s) => {
+    if (!s) return '—';
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0');
+  };
+  const ago = (iso) => {
+    const t = new Date(iso).getTime();
+    if (!isFinite(t)) return '—';
+    const d = (Date.now() - t) / 864e5;
+    if (d < 1) return Math.max(1, Math.round(d * 24)) + ' ч';
+    if (d < 30) return Math.round(d) + ' дн.';
+    if (d < 365) return Math.round(d / 30.4) + ' мес.';
+    return Math.floor(d / 365) + (d < 730 ? ' год' : ' г.');
+  };
+  const seoVerdict = (s) => (s >= 80 ? 'Отличная оптимизация' : s >= 60 ? 'Хорошая оптимизация' : s >= 40 ? 'Средняя оптимизация' : 'Слабая оптимизация');
+  const outVerdict = (x) => {
+    if (!x || !isFinite(x)) return { text: 'Нет данных о медиане канала', c: '' };
+    if (x >= 1.2) return { text: `Видео обгоняет канал в ${xFmt(x)} раза`, c: 'good' };
+    if (x >= 0.8) return { text: 'Видео на уровне медианы канала', c: 'mid' };
+    return { text: `Видео отстаёт от медианы канала в ${xFmt(1 / x)} раза`, c: 'bad' };
+  };
+  const outCls = (x) => (!x ? '' : x >= 2 ? 'good' : x >= 0.8 ? 'mid' : 'bad');
+  const descStats = (d) => ({
+    len: d.length,
+    links: (d.match(/https?:\/\/\S+/g) || []).length,
+    stamps: (d.match(/(^|\s)\d{1,2}:\d{2}(:\d{2})?/gm) || []).length,
+    hashtags: (d.match(/#[\p{L}\p{N}_]+/gu) || []).length,
+  });
+
+  let watchObs = null; // следит, чтобы панель оставалась первой в #secondary
+
   async function watchPage(vid) {
     // только внутри ytd-watch-flexy: у скрытых страниц ytd-browse (канал, главная) тоже есть #secondary
     // #secondary (а не #secondary-inner): другие расширения (Sider, YouTube Summary…) вставляются в #secondary-inner — мы выше них
     const anchor = await waitFor('ytd-watch-flexy #secondary');
-    if (!anchor || new URLSearchParams(location.search).get('v') !== vid) return;
-    const el = panel('tl-watch', 'Анализ видео');
+    const current = () => new URLSearchParams(location.search).get('v') === vid;
+    if (!anchor || !current() || !alive()) return;
+    document.getElementById('tl-watch')?.remove();
+    const el = document.createElement('div');
+    el.id = 'tl-watch';
+    el.className = 'tl-panel';
+    el.innerHTML = `<div class="tl-head"><span class="tl-logo">${ic('logo', 15)}</span><b>TubeLens</b>
+      <div class="tl-tabs" role="tablist" aria-label="Разделы TubeLens">${WTABS.map(([k, t]) =>
+        `<button type="button" role="tab" id="tl-wt-${k}" data-t="${k}" aria-controls="tl-wp-${k}" aria-selected="false" tabindex="-1" disabled>${t}</button>`).join('')}</div>
+      <button type="button" class="tl-x" title="Свернуть" aria-expanded="true">${ic('minus', 14)}</button></div>
+      <div class="tl-body"><div class="tl-muted tl-wload">Загрузка…</div></div>`;
     anchor.prepend(el);
+    const xBtn = el.querySelector('.tl-x');
+    const setCollapsed = (c) => {
+      el.classList.toggle('tl-collapsed', c);
+      xBtn.setAttribute('aria-expanded', String(!c));
+      xBtn.title = c ? 'Развернуть' : 'Свернуть';
+      lsSet(WCOLL_KEY, c ? '1' : '0');
+    };
+    setCollapsed(lsGet(WCOLL_KEY) === '1');
+    xBtn.addEventListener('click', () => setCollapsed(!el.classList.contains('tl-collapsed')));
+    // кто-то вставился выше — сразу возвращаемся наверх (с ограничением, чтобы не «драться» бесконечно с другим расширением)
+    watchObs?.disconnect();
+    let bumps = 0;
+    watchObs = new MutationObserver(() => {
+      if (!el.isConnected) { watchObs?.disconnect(); return; }
+      if (el.parentElement.firstElementChild !== el && bumps++ < 30) el.parentElement.prepend(el);
+    });
+    watchObs.observe(anchor, { childList: true });
+
     const body = el.querySelector('.tl-body');
+    const stale = () => !el.isConnected || !current();
+    let r;
     try {
-      const r = await send({ type: 'videoReport', id: vid });
-      const v = r.video;
-      body.innerHTML = `
-        <div class="tl-score-row">
-          <div class="tl-score ${cls(r.seo.score)}"><div>${r.seo.score}</div><small>SEO</small></div>
-          <div class="tl-grid">
-            <div><b>${fmt(v.views)}</b><small>просмотры</small></div>
-            <div><b>${fmt(v.vph)}</b><small>в час</small></div>
-            <div><b>${v.eng == null ? '—' : v.eng.toFixed(2) + '%'}</b><small>вовлечённость</small></div>
-            <div><b>${fmt(v.likes)}</b><small>лайки</small></div>
-            ${r.channel ? `<div><b>${fmt(r.channel.subs)}</b><small>подписчики</small></div>` : ''}
-            ${v.out ? `<div><b class="${v.out >= 2 ? 'good' : ''}">×${v.out.toFixed(1)}</b><small>к медиане канала</small></div>` : ''}
-          </div>
+      r = await send({ type: 'videoReport', id: vid });
+    } catch (e) {
+      if (!stale()) body.innerHTML = `<div class="tl-err">${esc(errorText(e))}</div>`;
+      return;
+    }
+    if (stale()) return;
+    const v = r.video, ch = r.channel;
+    v.tags = v.tags || [];
+    v.description = v.description || '';
+
+    body.innerHTML = WTABS.map(([k]) => `<div class="tl-wpane" role="tabpanel" id="tl-wp-${k}" aria-labelledby="tl-wt-${k}" tabindex="0" hidden></div>`).join('');
+    const pane = (k) => body.querySelector('#tl-wp-' + k);
+    const tabs = [...el.querySelectorAll('[role=tab]')];
+
+    // ----- Обзор -----
+    const renderOverview = () => {
+      const s = r.seo.score, ov = outVerdict(v.out);
+      pane('overview').innerHTML = `
+        <div class="tl-wscore">
+          <div class="tl-wnum ${cls(s)}"><b>${s}</b><small>/100</small></div>
+          <div class="tl-wscore-r"><div class="tl-wverd"><span class="${cls(s)}">${seoVerdict(s)}</span> <span class="tl-muted">· SEO-оценка</span></div>
+            <div class="tl-ruler" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${s}" aria-label="SEO-оценка"><i style="left:${Math.min(100, Math.max(0, s))}%"></i></div>
+            <div class="tl-ruler-l"><span>0</span><span>40</span><span>60</span><span>100</span></div></div>
         </div>
-        <details class="tl-details"><summary>SEO-чеклист (${r.seo.checks.filter((c) => c.ok).length}/${r.seo.checks.length})</summary>
-          <ul class="tl-check">${r.seo.checks.map((c) => `<li class="${c.ok ? 'ok' : ''}">${esc(c.text)}</li>`).join('')}</ul></details>
-        <div class="tl-sub"><span>Теги (${v.tags.length})</span>${v.tags.length ? `<button class="tl-btn tl-copyall">${ic('copy')} Копировать все</button>` : ''}</div>
-        <div class="tl-tags">${v.tags.length ? v.tags.map((t) => `<span class="tl-tag">${esc(t)}</span>`).join('') : '<span class="tl-muted">Тегов нет</span>'}</div>
+        <div class="tl-wline ${ov.c}">${esc(ov.text)}</div>
+        <div class="tl-wgrid">
+          <div title="${full(v.views)}"><b>${fmt(v.views)}</b><small>просмотры</small></div>
+          <div title="${full(v.vph)}"><b>${fmt(v.vph)}</b><small>в час (VPH)</small></div>
+          <div title="${full(v.likes)}"><b>${fmt(v.likes)}</b><small>лайки</small></div>
+          <div title="${full(v.comments)}"><b>${fmt(v.comments)}</b><small>комментарии</small></div>
+          <div><b>${v.eng == null ? '—' : v.eng.toFixed(2) + '%'}</b><small title="Вовлечённость: (лайки + комментарии) / просмотры">вовлечение</small></div>
+          <div title="Медиана канала: ${full(r.channelMedian)}"><b class="${outCls(v.out)}">${v.out ? '×' + xFmt(v.out) : '—'}</b><small>к медиане канала</small></div>
+          <div><b>${dur(v.duration)}</b><small>длительность</small></div>
+          <div title="${esc(v.publishedAt ? new Date(v.publishedAt).toLocaleString('ru') : '')}"><b>${ago(v.publishedAt)}</b><small>с публикации</small></div>
+        </div>
         <div class="tl-actions">
-          <button class="tl-btn tl-primary" data-open="video?id=${vid}">${ic('external')} Подробный анализ</button>
-          <button class="tl-btn" data-ai>${ic('sparkles')} AI-оптимизация</button>
-          ${r.channel ? `<button class="tl-btn" data-open="channel?q=${r.channel.id}">${ic('chart')} Аудит канала</button>` : ''}
+          <button type="button" class="tl-btn tl-primary" data-open="video?id=${vid}">${ic('external')} Подробный анализ</button>
         </div>
         <div class="tl-sub"><span>Скачать</span></div>
         <div class="tl-row">
-          <select class="tl-select">
+          <select class="tl-select" aria-label="Формат загрузки">
             <option value="best">Видео — лучшее</option><option value="1080">Видео — 1080p</option><option value="720">Видео — 720p</option>
             <option value="audio">Аудио (m4a)</option><option value="mp3">Аудио MP3</option></select>
-          <button class="tl-btn tl-primary" data-dl>${ic('download')} Скачать</button><button class="tl-btn" data-thumb>${ic('image')} Обложка</button>
-        </div><div class="tl-muted tl-dlmsg"></div>
-        `;
-      const dlMsg = body.querySelector('.tl-dlmsg');
-      body.querySelector('[data-dl]').addEventListener('click', async () => {
+          <button type="button" class="tl-btn tl-primary" data-dl>${ic('download')} Скачать</button><button type="button" class="tl-btn" data-thumb>${ic('image')} Обложка</button>
+        </div><div class="tl-muted tl-dlmsg" aria-live="polite"></div>`;
+      const p = pane('overview'), dlMsg = p.querySelector('.tl-dlmsg');
+      p.querySelector('[data-open]').addEventListener('click', (e) => open(e.currentTarget.dataset.open));
+      p.querySelector('[data-dl]').addEventListener('click', async () => {
         dlMsg.textContent = 'Отправляю в помощник загрузки…';
         try {
-          await send({ type: 'dlStart', url: location.href.split('&')[0], preset: body.querySelector('.tl-select').value, title: v.title });
+          await send({ type: 'dlStart', url: 'https://www.youtube.com/watch?v=' + vid, preset: p.querySelector('.tl-select').value, title: v.title });
           dlMsg.innerHTML = 'Загрузка идёт — прогресс в <a href="#" data-open-dl>разделе «Загрузки»</a>';
           dlMsg.querySelector('[data-open-dl]').addEventListener('click', (e) => { e.preventDefault(); open('downloads'); });
         } catch (e) { dlMsg.textContent = e.message; }
       });
-      body.querySelector('[data-thumb]').addEventListener('click', () =>
+      p.querySelector('[data-thumb]').addEventListener('click', () =>
         send({ type: 'thumb', id: vid, title: v.title }).then(() => (dlMsg.textContent = 'Обложка скачивается'), (e) => (dlMsg.textContent = e.message)));
-      body.querySelectorAll('.tl-tag').forEach((t) => t.addEventListener('click', () => copy(t.textContent, t)));
-      body.querySelector('.tl-copyall')?.addEventListener('click', (e) => copy(v.tags.join(', '), e.currentTarget));
-      body.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => open(b.dataset.open)));
-      body.querySelector('[data-ai]').addEventListener('click', () =>
-        open('ai?' + new URLSearchParams({ tool: 'optimize', title: v.title, tags: v.tags.join(', '), description: v.description.slice(0, 1500) })));
-    } catch (e) {
-      body.innerHTML = `<div class="tl-err">${esc(errorText(e))}</div>`;
-    }
+    };
+
+    // ----- SEO -----
+    let rescoreSeq = 0, kwSeq = 0;
+    const renderSeo = () => {
+      const checks = [...r.seo.checks].sort((a, b) => a.ok - b.ok || b.weight - a.weight);
+      const okN = checks.filter((c) => c.ok).length;
+      const tagsLen = v.tags.join(',').length;
+      const ds = descStats(v.description);
+      const kw = r.seo.keyword || '';
+      pane('seo').innerHTML = `
+        <label class="tl-wlabel" for="tl-wkw">Ключевая фраза</label>
+        <div class="tl-row tl-wkwrow">
+          <input id="tl-wkw" class="tl-input" type="text" maxlength="100" placeholder="например, как приготовить плов" value="${esc(kw)}">
+          <button type="button" class="tl-btn tl-primary" data-rescore>Пересчитать</button>
+          <button type="button" class="tl-btn" data-kwscore title="Спрос и конкуренция по поиску YouTube (несколько секунд)">${ic('chart')} Оценка ключа</button>
+        </div>
+        <div class="tl-wkwres" aria-live="polite"></div>
+        <div class="tl-sub"><span>SEO-чеклист <span class="${cls(r.seo.score)}">${r.seo.score}</span><span class="tl-muted"> · ${okN}/${checks.length}</span></span></div>
+        <ul class="tl-check tl-wcheck">${checks.map((c) => `<li class="${c.ok ? 'ok' : ''}"><span>${esc(c.text)}</span><small title="Вес пункта">${c.weight}</small></li>`).join('')}</ul>
+        <div class="tl-sub"><span>Теги (${v.tags.length}) <span class="${tagsLen > 500 ? 'bad' : 'tl-muted'} tl-wcnt">${tagsLen}/500</span></span>
+          ${v.tags.length ? `<button type="button" class="tl-btn tl-copyall">${ic('copy')} Копировать все</button>` : ''}</div>
+        <div class="tl-tags">${v.tags.length ? v.tags.map((t) => `<button type="button" class="tl-tag" title="Скопировать тег">${esc(t)}</button>`).join('') : '<span class="tl-muted">Тегов нет</span>'}</div>
+        <div class="tl-sub"><span>Описание</span></div>
+        <div class="tl-wgrid tl-wgrid4">
+          <div><b class="${ds.len >= 250 ? '' : 'bad'}">${full(ds.len)}</b><small>символов</small></div>
+          <div><b>${ds.links}</b><small>ссылок</small></div>
+          <div><b class="${ds.stamps >= 3 ? 'good' : ''}">${ds.stamps}</b><small>таймкодов</small></div>
+          <div><b>${ds.hashtags}</b><small>хэштегов</small></div>
+        </div>
+        ${v.description ? '<details class="tl-details tl-wdesc"><summary>Показать описание</summary><div class="tl-wdesc-t"></div></details>' : '<div class="tl-muted">Описания нет</div>'}`;
+      const p = pane('seo');
+      const dt = p.querySelector('.tl-wdesc-t');
+      if (dt) dt.textContent = v.description;
+      p.querySelectorAll('.tl-tag').forEach((t) => t.addEventListener('click', () => copy(t.textContent, t)));
+      p.querySelector('.tl-copyall')?.addEventListener('click', (e) => copy(v.tags.join(', '), e.currentTarget));
+      const input = p.querySelector('#tl-wkw'), res = p.querySelector('.tl-wkwres');
+      const rescore = async () => {
+        const btn = p.querySelector('[data-rescore]');
+        const my = ++rescoreSeq;
+        btn.disabled = true;
+        res.innerHTML = '<div class="tl-muted">Пересчитываю…</div>';
+        try {
+          const nr = await send({ type: 'videoReport', id: vid, keyword: input.value.trim() });
+          if (stale() || my !== rescoreSeq) return;
+          r.seo = nr.seo;
+          renderOverview();
+          renderSeo();
+          pane('seo').querySelector('.tl-wkwres').innerHTML =
+            `<div class="tl-muted">SEO-оценка для «${esc(nr.seo.keyword || '—')}»: <b class="${cls(nr.seo.score)}">${nr.seo.score}</b></div>`;
+          pane('seo').querySelector('#tl-wkw').focus();
+        } catch (e) {
+          if (stale() || my !== rescoreSeq) return;
+          res.innerHTML = `<div class="tl-err">${esc(errorText(e))}</div>`;
+          btn.disabled = false;
+        }
+      };
+      p.querySelector('[data-rescore]').addEventListener('click', rescore);
+      input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); rescore(); } });
+      // YouTube ловит горячие клавиши (k, j, l, f, / …) — не даём им срабатывать при наборе
+      input.addEventListener('keydown', (e) => e.stopPropagation());
+      p.querySelector('[data-kwscore]').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const q = input.value.trim() || r.seo.keyword || v.tags[0] || '';
+        if (!q) { res.innerHTML = '<div class="tl-muted">Введите ключевую фразу.</div>'; return; }
+        const my = ++kwSeq;
+        btn.disabled = true;
+        res.innerHTML = `<div class="tl-muted">Оцениваю «${esc(q)}» по выдаче YouTube…</div>`;
+        try {
+          const kr = await send({ type: 'keyword', q });
+          if (stale() || my !== kwSeq || !res.isConnected) return;
+          const s = kr.score;
+          res.innerHTML = `<div class="tl-wkwbox"><div class="tl-muted tl-wkwq">Оценка ключа «${esc(q)}»</div>
+            <div class="tl-wgrid tl-wgrid4">
+              <div><b class="${cls(s.overall)}">${s.overall}</b><small>общая</small></div>
+              <div><b class="${cls(s.volume)}">${s.volume}</b><small>спрос</small></div>
+              <div><b class="${cls(100 - s.competition)}">${s.competition}</b><small>конкуренция</small></div>
+              <div><b>${fmt(s.medViews)}</b><small>медиана просм.</small></div></div>
+            ${s.insights?.length ? `<ul class="tl-ins">${s.insights.map((i) => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</div>`;
+        } catch (err) {
+          if (stale() || my !== kwSeq || !res.isConnected) return;
+          res.innerHTML = `<div class="tl-err">${esc(errorText(err))}</div>`;
+        } finally { if (btn.isConnected) btn.disabled = false; }
+      });
+    };
+
+    // ----- Канал -----
+    const renderChannel = () => {
+      const p = pane('channel');
+      if (!ch) { p.innerHTML = '<div class="tl-muted">Нет данных о канале.</div>'; return; }
+      const cid = /^UC[\w-]{22}$/.test(ch.id || '') ? ch.id : '';
+      const thumb = /^https:\/\//.test(ch.thumb || '') ? ch.thumb : '';
+      const med = r.channelMedian || 0;
+      const max = Math.max(v.views || 0, med, 1);
+      const handle = ch.handle ? (ch.handle.startsWith('@') ? ch.handle : '@' + ch.handle) : '';
+      const ov = outVerdict(v.out);
+      p.innerHTML = `
+        <div class="tl-ch">${thumb ? `<img src="${esc(thumb)}" alt="">` : '<span class="tl-wava"></span>'}<div>
+          <b>${esc(ch.title)}</b><div class="tl-muted">${esc(handle)}${handle ? ' · ' : ''}${fmt(ch.subs)} подписчиков</div></div></div>
+        <div class="tl-wgrid tl-wgrid3">
+          <div title="${full(ch.subs)}"><b>${fmt(ch.subs)}</b><small>подписчики</small></div>
+          <div title="${full(med)}"><b>${med ? fmt(med) : '—'}</b><small>медиана, 30 видео</small></div>
+          <div><b class="${outCls(v.out)}">${v.out ? '×' + xFmt(v.out) : '—'}</b><small>это видео</small></div>
+        </div>
+        ${med ? `<div class="tl-wbars" role="img" aria-label="Просмотры видео ${full(v.views)}, медиана канала ${full(med)}">
+          <div class="tl-wbar"><span>Это видео</span><i><em class="tl-wbar-v" style="width:${(((v.views || 0) / max) * 100).toFixed(1)}%"></em></i><b>${fmt(v.views)}</b></div>
+          <div class="tl-wbar"><span>Медиана</span><i><em style="width:${((med / max) * 100).toFixed(1)}%"></em></i><b>${fmt(med)}</b></div>
+        </div>` : ''}
+        <div class="tl-wline ${ov.c}">${esc(ov.text)}${ch.subs && v.views ? `<span class="tl-muted"> · просмотры = ${((v.views / ch.subs) * 100).toFixed(0)}% от подписчиков</span>` : ''}</div>
+        <div class="tl-actions">
+          ${cid ? `<button type="button" class="tl-btn tl-primary" data-open="channel?q=${cid}">${ic('chart')} Аудит канала</button>
+          <a class="tl-btn" href="https://www.youtube.com/channel/${cid}">${ic('external')} Открыть канал</a>` : ''}
+        </div>`;
+      p.querySelector('[data-open]')?.addEventListener('click', (e) => open(e.currentTarget.dataset.open));
+    };
+
+    // ----- AI -----
+    const ctx = () => [
+      `Видео: «${v.title}»`,
+      ch ? `Канал: ${ch.title}, подписчиков ${ch.subs}` : '',
+      `Просмотры ${v.views}, в час ${Math.round(v.vph || 0)}, лайки ${v.likes ?? '—'}, комментарии ${v.comments ?? '—'}, вовлечённость ${v.eng == null ? '—' : v.eng.toFixed(2) + '%'}` +
+        (v.out ? `, ×${v.out.toFixed(1)} к медиане канала` : '') + `, длительность ${dur(v.duration)}`,
+      r.seo.keyword ? `Ключевая фраза: ${r.seo.keyword}` : '',
+      `Теги: ${v.tags.join(', ') || '—'}`,
+      `Описание (начало):\n${v.description.slice(0, 1500) || '—'}`,
+    ].filter(Boolean).join('\n');
+    const PROMPTS = {
+      title: () => 'Предложи 5 вариантов заголовка для этого видео: цепляющих, до 70 символов, с ключевой фразой ближе к началу, без обманного кликбейта и без КАПСА. Язык — как у оригинала. Пронумеруй, без пояснений.',
+      desc: () => 'Перепиши описание этого видео для YouTube: первые 2 строки — крючок с ключевой фразой, затем краткое содержание, места для таймкодов, призыв подписаться, 3–5 хэштегов в конце. Язык — как у оригинала. Выведи только готовый текст описания.',
+      tags: () => 'Составь теги для этого видео: от самых точных к общим, на языке видео, через запятую в одну строку, общая длина не более 500 символов. Выведи только список тегов, без пояснений.',
+      thumb: () => 'Предложи 5 идей для обложки (превью) этого видео: что на картинке, крупный текст на обложке (2–4 слова), эмоция, цвета, композиция. Коротко, пронумеруй.',
+      tr: (lang) => `Переведи название и описание этого видео на язык: ${lang}. Это локализация для YouTube Studio (раздел «Переводы»). Название — до 100 символов, естественно для носителя языка, не дословно. В описании сохрани ссылки, таймкоды, хэштеги и переносы строк.\n` +
+        `Ответь строго в формате:\nНазвание: <перевод названия>\n\nОписание:\n<перевод описания>\n\nПолное описание оригинала:\n${v.description.slice(0, 4500) || '—'}`,
+    };
+    let aiSeq = 0;
+    const renderAi = () => {
+      const p = pane('ai');
+      p.innerHTML = `<div class="tl-muted tl-wnote">Ответ даст модель из настроек TubeLens.</div>
+        <div class="tl-actions tl-waiacts">
+          <button type="button" class="tl-btn" data-ask="title">${ic('sparkles')} Улучшить заголовок</button>
+          <button type="button" class="tl-btn" data-ask="desc">${ic('sparkles')} Переписать описание</button>
+          <button type="button" class="tl-btn" data-ask="tags">${ic('sparkles')} Теги</button>
+          <button type="button" class="tl-btn" data-ask="thumb">${ic('sparkles')} Идеи обложки</button>
+        </div>
+        <div class="tl-sub"><span>Перевод для YouTube Studio</span></div>
+        <div class="tl-row">
+          <select class="tl-select" data-lang aria-label="Язык перевода">${LANGS.map((l) => `<option>${esc(l)}</option>`).join('')}</select>
+          <button type="button" class="tl-btn" data-ask="tr">${ic('sparkles')} Перевести название и описание</button>
+        </div>
+        <div class="tl-waibox" hidden>
+          <div class="tl-sub"><span class="tl-waititle">Результат</span><span class="tl-row"><span class="tl-muted tl-wcnt tl-waicnt"></span>
+            <button type="button" class="tl-btn" data-aicopy disabled>${ic('copy')} Копировать</button></span></div>
+          <div class="tl-ai-out" aria-live="polite"></div>
+        </div>`;
+      const box = p.querySelector('.tl-waibox'), out = p.querySelector('.tl-ai-out'), cnt = p.querySelector('.tl-waicnt');
+      const copyBtn = p.querySelector('[data-aicopy]'), titleEl = p.querySelector('.tl-waititle');
+      copyBtn.addEventListener('click', (e) => copy(out.textContent, e.currentTarget));
+      p.querySelectorAll('[data-ask]').forEach((b) => b.addEventListener('click', async () => {
+        const kind = b.dataset.ask;
+        const lang = p.querySelector('[data-lang]').value;
+        const my = ++aiSeq;
+        box.hidden = false;
+        titleEl.textContent = kind === 'tr' ? `Перевод: ${lang}` : b.textContent.trim();
+        out.classList.remove('tl-err');
+        out.textContent = 'AI думает…';
+        cnt.textContent = '';
+        cnt.classList.remove('bad');
+        copyBtn.disabled = true;
+        p.querySelectorAll('[data-ask]').forEach((x) => (x.disabled = true));
+        try {
+          const text = String((await send({ type: 'aiAsk', prompt: ctx() + '\n\n' + PROMPTS[kind](lang) })) ?? '').trim();
+          if (stale() || my !== aiSeq) return;
+          out.textContent = text || 'Пустой ответ.';
+          copyBtn.disabled = !text;
+          if (kind === 'tags') {
+            const n = text.replace(/\s*,\s*/g, ',').length;
+            cnt.textContent = `${n}/500`;
+            cnt.classList.toggle('bad', n > 500);
+          }
+        } catch (e) {
+          if (stale() || my !== aiSeq) return;
+          out.classList.add('tl-err');
+          out.textContent = errorText(e);
+        } finally {
+          if (my === aiSeq && !stale()) p.querySelectorAll('[data-ask]').forEach((x) => (x.disabled = false));
+        }
+      }));
+    };
+
+    renderOverview();
+    renderSeo();
+    renderChannel();
+    renderAi();
+
+    // ----- вкладки (WAI-ARIA tabs: стрелки, Home/End) -----
+    const select = (name, focus) => {
+      if (!WTABS.some(([k]) => k === name)) name = 'overview';
+      tabs.forEach((t) => {
+        const on = t.dataset.t === name;
+        t.classList.toggle('on', on);
+        t.setAttribute('aria-selected', String(on));
+        t.tabIndex = on ? 0 : -1;
+        pane(t.dataset.t).hidden = !on;
+        if (on && focus) t.focus();
+      });
+      lsSet(WTAB_KEY, name);
+    };
+    tabs.forEach((t, i) => {
+      t.disabled = false;
+      t.addEventListener('click', () => { select(t.dataset.t); if (el.classList.contains('tl-collapsed')) setCollapsed(false); });
+      t.addEventListener('keydown', (e) => {
+        const n = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: tabs.length - 1 }[e.key];
+        if (n == null) return;
+        e.preventDefault();
+        e.stopPropagation(); // стрелки иначе перематывают видео
+        select(tabs[(n + tabs.length) % tabs.length].dataset.t, true);
+      });
+    });
+    select(lsGet(WTAB_KEY) || 'overview');
   }
 
   // ---------- страница поиска ----------
@@ -484,6 +778,7 @@
     dead = true;
     clearInterval(routeTimer);
     cardsObs?.disconnect();
+    watchObs?.disconnect();
     document.removeEventListener('yt-navigate-finish', onNav);
   }
   route();

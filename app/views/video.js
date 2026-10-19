@@ -1,6 +1,6 @@
-import { $, esc, fmt, pct, dur, stat, gauge, go, bg, icon, toast, timeAgo, chips, checklist, loadingHtml, errorHtml, aiOutput, pageHead, ytLink } from '../ui.js';
+import { $, $$, esc, fmt, pct, dur, stat, gauge, go, bg, icon, toast, copy, timeAgo, chips, checklist, loadingHtml, errorHtml, aiOutput, pageHead, ytLink } from '../ui.js';
 import { videoReport, rankCheck } from '../../lib/analysis.js';
-import { pushRecent } from '../../lib/storage.js';
+import { pushRecent, getSettings } from '../../lib/storage.js';
 import { parseVideoId, topComments } from '../../lib/youtube.js';
 import { ask } from '../../lib/ai.js';
 import { SYSTEM, toolById } from '../../lib/prompts.js';
@@ -57,6 +57,7 @@ async function analyze(res, id, kw) {
           <span class="muted">${c ? ` · <span class="mono">${fmt(c.subs)}</span> подписчиков` : ''} · ${timeAgo(v.publishedAt)}</span></span></div>
         <div class="vr-actions">
           <button class="btn" id="opt">${icon('sparkles', 15)} AI-оптимизация</button>
+          <button class="btn ghost" id="tr">${icon('translate', 15)} Перевести</button>
           ${r.hasKey ? `<button class="btn ghost" id="cmt">${icon('message', 15)} Анализ комментариев</button>` : ''}
           <span class="vr-sec">
             ${c ? `<button class="btn ghost sm" id="ch">${icon('chart', 14)} Аудит канала</button>` : ''}
@@ -119,6 +120,8 @@ async function analyze(res, id, kw) {
     } catch (e) { box.innerHTML = errorHtml(e); }
   });
 
+  $('#tr', res).addEventListener('click', () => translatePanel(aiBlock('Перевод названия и описания'), v));
+
   $('#cmt', res)?.addEventListener('click', async () => {
     const box = aiBlock('Анализ комментариев');
     box.innerHTML = loadingHtml('Читаю комментарии…');
@@ -146,5 +149,122 @@ async function analyze(res, id, kw) {
         ? `<span class="vr-pos ${pos <= 10 ? 'good' : pos <= 30 ? 'mid' : ''}">#${pos}</span><span>по запросу «${esc(q)}»<br><span class="muted small">${pos <= 10 ? 'первая страница выдачи' : 'из топ-50'}</span></span>`
         : `<span class="vr-pos muted">—</span><span>Не найдено в топ-50 по запросу «${esc(q)}»</span>`;
     } catch (err) { o.innerHTML = errorHtml(err); }
+  });
+}
+
+// ── Перевод названия и описания (YouTube Студия → Субтитры → «Название и описание») ──
+const LANGS = [
+  ['English', 'en'], ['Español', 'es'], ['Português', 'pt'], ['Deutsch', 'de'], ['Français', 'fr'], ['Українська', 'uk'],
+  ['Русский', 'ru'], ['Türkçe', 'tr'], ['Bahasa Indonesia', 'id'], ['हिन्दी', 'hi'], ['日本語', 'ja'], ['한국어', 'ko'],
+];
+const DEF_LANGS = ['en', 'es', 'pt'];
+const TONES = [['точный перевод', 'Точный перевод'], ['адаптация под страну', 'Адаптация под страну']];
+// Выбранный чип: акцентная рамка + галочка (у .chip нет состояния «вкл», поэтому inline-стиль на токенах темы)
+const CHIP_ON = 'border-color:var(--accent);background:var(--accent-soft);color:var(--accent)';
+const langWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? 'язык' : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? 'языка' : 'языков');
+
+function translatePanel(box, v) {
+  const sel = new Set(DEF_LANGS);
+  let tone = TONES[0][0];
+  box.innerHTML = `<div class="card">
+      <div class="eyebrow" id="trLangL">Языки</div>
+      <div class="chips" role="group" aria-labelledby="trLangL" style="margin-top:10px">
+        ${LANGS.map(([, code]) => `<button type="button" class="chip" data-code="${code}" lang="${code}"></button>`).join('')}</div>
+      <div class="row" style="margin-top:16px">
+        <div class="seg" role="group" aria-label="Режим перевода">${TONES.map(([k, l]) => `<button type="button" data-tone="${esc(k)}">${esc(l)}</button>`).join('')}</div>
+        <span class="grow"></span>
+        <button type="button" class="btn" id="trGo">${icon('translate', 15)} Перевести</button>
+      </div>
+      <div class="muted small" style="margin-top:10px">Для каждого языка: название до 100 символов, описание с сохранёнными таймкодами, ссылками и хэштегами, 10 ключевых запросов. Вставьте в YouTube Студию → Субтитры → язык → «Название и описание».</div>
+    </div>
+    <div id="trOut" aria-live="polite"></div>`;
+
+  const run = $('#trGo', box);
+  const paint = () => {
+    $$('[data-code]', box).forEach((b) => {
+      const on = sel.has(b.dataset.code);
+      b.setAttribute('aria-pressed', on);
+      b.style.cssText = on ? CHIP_ON : '';
+      b.innerHTML = `${on ? icon('check', 12) : ''}${esc(LANGS.find((l) => l[1] === b.dataset.code)[0])}`;
+    });
+    $$('[data-tone]', box).forEach((b) => { b.classList.toggle('on', b.dataset.tone === tone); b.setAttribute('aria-pressed', b.dataset.tone === tone); });
+    run.disabled = !sel.size;
+  };
+  $$('[data-code]', box).forEach((b) => b.addEventListener('click', () => { sel.has(b.dataset.code) ? sel.delete(b.dataset.code) : sel.add(b.dataset.code); paint(); }));
+  $$('[data-tone]', box).forEach((b) => b.addEventListener('click', () => { tone = b.dataset.tone; paint(); }));
+  paint();
+
+  run.addEventListener('click', async () => {
+    const langs = LANGS.filter(([, code]) => sel.has(code));
+    if (!langs.length) return;
+    const out = $('#trOut', box);
+    const desc = v.description.slice(0, 4000);
+    out.innerHTML = loadingHtml(`Перевожу на ${langs.length} ${langWord(langs.length)}…`);
+    run.disabled = true;
+    try {
+      // ответ длинный (описание × число языков) — поднимаем лимит токенов относительно настроек
+      const { ai } = await getSettings();
+      const need = langs.length * (350 + Math.ceil(desc.length / 2.5));
+      const maxTokens = Math.max(ai?.maxTokens || 2048, Math.min(16000, need));
+      const prompt = toolById('translate').prompt({
+        title: v.title, description: desc, tone,
+        languages: langs.map(([name, code]) => `${name} (${code})`).join(', '),
+      });
+      renderTranslations(out, await ask(prompt, SYSTEM, { maxTokens }), langs.length);
+    } catch (e) { out.innerHTML = errorHtml(e); }
+    finally { run.disabled = !sel.size; }
+  });
+}
+
+// Разбор ответа: блоки «### Язык (код)» с метками Название / Описание / Ключевые слова
+const LABEL = /^\s*[*_]*\s*(название|title|описание|description|ключевые слова|keywords)\s*[*_]*\s*:\s*[*_]*\s*(.*)$/i;
+function parseTranslations(text) {
+  const parts = String(text || '').replace(/\r/g, '').replace(/^```\w*\s*$/gm, '').split(/^#{2,4}\s+/m).slice(1);
+  return parts.map((p) => {
+    const lines = p.split('\n');
+    const head = lines.shift().replace(/[*_#]/g, '').trim();
+    const m = head.match(/^(.*?)\s*\(([a-z]{2,3}(?:-[A-Za-z]{2,4})?)\)\s*$/);
+    const f = { title: [], description: [], keywords: [] };
+    let cur = null;
+    for (const line of lines) {
+      const l = line.match(LABEL);
+      if (l) {
+        const k = l[1].toLowerCase();
+        cur = /назв|title/.test(k) ? 'title' : /опис|desc/.test(k) ? 'description' : 'keywords';
+        if (l[2].trim()) f[cur].push(l[2].replace(/[*_]+\s*$/, ''));
+      } else if (cur) f[cur].push(line);
+    }
+    const title = f.title.join(' ').trim().replace(/^["«]|["»]$/g, '');
+    const description = f.description.join('\n').trim().replace(/^[—-]$/, '');
+    const keywords = f.keywords.join(',').split(/\s*,\s*/).map((s) => s.trim()).filter(Boolean);
+    return { name: m ? m[1] : head, code: m ? m[2] : '', title, description, keywords };
+  }).filter((b) => b.title);
+}
+
+function renderTranslations(out, text, asked) {
+  const blocks = parseTranslations(text);
+  if (!blocks.length) return aiOutput(out, text); // формат не распознан — весь текст с одной кнопкой
+  out.innerHTML = `<div class="row" style="margin:16px 0 10px"><span class="muted small">Готово: ${blocks.length} из ${asked} · клик по ключевому слову копирует его</span><span class="grow"></span>
+      <button type="button" class="btn ghost sm" data-all>${icon('copy', 14)} Копировать всё</button></div>`;
+  $('[data-all]', out).addEventListener('click', () => copy(text.trim()));
+  blocks.forEach((b) => {
+    const card = document.createElement('article');
+    card.className = 'card';
+    if (b.code) card.lang = b.code;
+    const over = b.title.length > 100;
+    card.innerHTML = `<h3 class="row">${esc(b.name)}${b.code ? `<span class="badge">${esc(b.code)}</span>` : ''}</h3>
+      <div class="row"><span class="eyebrow">Название</span><span class="small mono ${over ? 'bad' : 'muted'}"${over ? ' title="YouTube обрежет название длиннее 100 символов"' : ''}>${b.title.length}/100</span></div>
+      <div class="ai-out" style="margin:6px 0 14px">${esc(b.title)}</div>
+      ${b.description ? `<div class="row"><span class="eyebrow">Описание</span><span class="small mono muted">${b.description.length}/5000</span></div>
+      <div class="ai-out" style="margin:6px 0 14px;max-height:260px;overflow:auto">${esc(b.description)}</div>` : ''}
+      ${b.keywords.length ? '<div class="eyebrow" style="margin-bottom:6px">Ключевые слова</div><div data-kw></div>' : ''}
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="btn ghost sm" data-t>${icon('copy', 14)} Копировать название</button>
+        ${b.description ? `<button type="button" class="btn ghost sm" data-d>${icon('copy', 14)} Копировать описание</button>` : ''}
+      </div>`;
+    if (b.keywords.length) $('[data-kw]', card).append(chips(b.keywords.map((t) => ({ text: t })), { copyAll: true }));
+    $('[data-t]', card).addEventListener('click', () => copy(b.title));
+    $('[data-d]', card)?.addEventListener('click', () => copy(b.description));
+    out.append(card);
   });
 }

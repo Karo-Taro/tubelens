@@ -123,16 +123,120 @@ const COLS = {
   date: { t: 'Дата', num: true, val: (v) => new Date(v.publishedAt).getTime(), html: (v) => new Date(v.publishedAt).toLocaleDateString() },
 };
 
-export function videoTable(container, videos, cols = ['video', 'views', 'vph', 'eng'], onClick) {
+/* ---------- CSV-экспорт ---------- */
+// Формат под русский Excel: UTF-8 с BOM, разделитель «;», дробные числа с запятой.
+const CSV_SEP = ';';
+
+function csvCell(v) {
+  if (v == null || (typeof v === 'number' && !Number.isFinite(v))) return '';
+  if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(+v.toFixed(4)).replace('.', ',');
+  let s = String(v);
+  // защита от CSV-инъекций формул в Excel (заголовки вида «=…», «+…», «@…»)
+  if (/^[=+\-@\t\r]/.test(s) && !/^-?\d/.test(s)) s = "'" + s;
+  return /[";\r\n,]/.test(s) || /^\s|\s$/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+export function toCsv(headers, rows) {
+  const lines = [];
+  if (headers?.length) lines.push(headers.map(csvCell).join(CSV_SEP));
+  for (const r of rows) lines.push(r.map(csvCell).join(CSV_SEP));
+  return '﻿' + lines.join('\r\n') + '\r\n';
+}
+
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+// Скачать CSV: имя без даты и расширения дополняется автоматически (tubelens-videos → tubelens-videos-2026-10-19.csv)
+export function downloadCsv(filename, headers, rows) {
+  let name = String(filename || 'tubelens-export').replace(/[\\/:*?"<>|]+/g, '-');
+  if (!/\.csv$/i.test(name)) name += '-' + today() + '.csv';
+  const blob = new Blob([toCsv(headers, rows)], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  a.style.display = 'none';
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  return name;
+}
+
+// Числа из ячейки таблицы: «12,5%» / «1 234» → число; сокращения (1.2K) и прочий текст оставляем строкой
+function cellValue(td) {
+  const t = (td.textContent || '').replace(/\s+/g, ' ').trim();
+  const n = t.replace(/[\s %]/g, '').replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(n) ? +n : t;
+}
+
+// Любая <table> → { headers, rows } по видимому тексту (пустые служебные колонки отбрасываются)
+export function tableToCsv(tableEl) {
+  const head = [...(tableEl.tHead?.rows[0]?.cells || [])].map((th) => (th.textContent || '').replace(/[▾▴]/g, '').trim());
+  const body = [...(tableEl.tBodies[0]?.rows || tableEl.rows)].filter((tr) => tr.parentElement?.tagName !== 'THEAD');
+  const rows = body.map((tr) => [...tr.cells].map(cellValue));
+  const keep = head.map((h, i) => h !== '' || rows.some((r) => r[i] !== '' && r[i] != null));
+  return {
+    headers: head.filter((_, i) => keep[i]),
+    rows: rows.map((r) => r.filter((_, i) => keep[i] ?? true)),
+  };
+}
+
+// Кнопка «CSV» для тулбаров таблиц
+export function csvButton(onClick) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'btn ghost sm csv-btn';
+  b.title = 'Скачать таблицу в CSV';
+  b.setAttribute('aria-label', 'Скачать таблицу в CSV');
+  b.innerHTML = `${icon('download', 14)}<span>CSV</span>`;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+const fixed = (n, d = 2) => (Number.isFinite(+n) && n !== null && n !== '' ? +(+n).toFixed(d) : '');
+const isoDate = (s) => { const t = new Date(s); return s && !isNaN(t) ? t.toISOString() : ''; };
+
+const VIDEO_CSV = [
+  ['Заголовок', (v) => v.title || ''],
+  ['Ссылка', (v) => (v.id ? ytLink(v.id) : '')],
+  ['Канал', (v) => v.channelTitle || ''],
+  ['Просмотры', (v) => fixed(v.views, 0)],
+  ['Просмотров в час', (v) => fixed(v.vph, 1)],
+  ['Вовлечённость, %', (v) => fixed(v.eng, 2)],
+  ['Аутлаер, ×', (v) => fixed(v.out, 2)],
+  ['Подписчики', (v) => fixed(v.subs, 0)],
+  ['Просм./подп.', (v) => fixed(v.ratio, 2)],
+  ['Длительность', (v) => (v.duration ? dur(v.duration) : '')],
+  ['Длительность, сек', (v) => (v.duration ? Math.round(v.duration) : '')],
+  ['Опубликовано', (v) => isoDate(v.publishedAt)],
+  ['Теги', (v) => (Array.isArray(v.tags) ? v.tags.join('; ') : v.tags || '')],
+];
+
+export function videosToCsvRows(videos) {
+  const cols = VIDEO_CSV.filter(([h]) => h !== 'Теги' || videos.some((v) => (Array.isArray(v.tags) ? v.tags.length : v.tags)));
+  return { headers: cols.map(([h]) => h), rows: videos.map((v) => cols.map(([, f]) => f(v))) };
+}
+
+export function videoTable(container, videos, cols = ['video', 'views', 'vph', 'eng'], onClick, opts = {}) {
+  const { csvName = 'tubelens-videos', title = '' } = opts || {};
   let sortKey = null, dir = -1;
+  const sorted = () => (sortKey ? [...videos].sort((a, b) => dir * ((COLS[sortKey].val(a) || 0) - (COLS[sortKey].val(b) || 0))) : videos);
   const draw = () => {
-    const rows = sortKey ? [...videos].sort((a, b) => dir * ((COLS[sortKey].val(a) || 0) - (COLS[sortKey].val(b) || 0))) : videos;
-    container.innerHTML = `<div class="table-wrap"><table><thead><tr>${cols
+    const rows = sorted();
+    container.innerHTML = `<div class="table-tools">${title ? `<span class="table-tools-t">${esc(title)}</span>` : ''}<span class="table-tools-n">${rows.length} видео</span></div><div class="table-wrap"><table><thead><tr>${cols
       .map((c) => `<th data-k="${c}" class="${COLS[c].num ? 'num' : ''}"${COLS[c].val ? ` tabindex="0" aria-sort="${sortKey === c ? (dir < 0 ? 'descending' : 'ascending') : 'none'}"` : ''}>${COLS[c].t}${sortKey === c ? (dir < 0 ? ' ▾' : ' ▴') : ''}</th>`)
       .join('')}<th></th></tr></thead><tbody>${rows
       .map((v) => `<tr class="click" data-id="${esc(v.id)}" tabindex="0">${cols.map((c) => `<td class="${COLS[c].num ? 'num' : ''}">${COLS[c].html(v)}</td>`).join('')}
         <td class="num"><a class="ext" href="${esc(ytLink(v.id))}" target="_blank" rel="noopener" title="Открыть на YouTube" aria-label="Открыть на YouTube">${icon('external', 14)}</a></td></tr>`)
       .join('')}</tbody></table></div>`;
+    $('.table-tools', container).append(csvButton(() => {
+      const { headers, rows: data } = videosToCsvRows(sorted());
+      const name = downloadCsv(csvName, headers, data);
+      toast('Сохранено: ' + name);
+    }));
     // сортировка и переход по строке — мышью и с клавиатуры (Enter / пробел)
     const onKey = (fn) => (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); fn(e); } };
     $$('th', container).forEach((th) => {

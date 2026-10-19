@@ -6,7 +6,7 @@ import { presetById } from '../../lib/presets.js';
 
 // Группы инструментов по задаче автора. Инструменты, которых нет в списке, попадают в «Другое».
 const GROUPS = [
-  ['Упаковка', ['titles', 'description', 'tags', 'thumbnail']],
+  ['Упаковка', ['titles', 'description', 'tags', 'thumbnail', 'translate']],
   ['Контент', ['ideas', 'script', 'hooks', 'shorts']],
   ['Работа с каналом', ['optimize', 'comments', 'channelAudit']],
 ];

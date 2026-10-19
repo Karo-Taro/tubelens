@@ -99,7 +99,7 @@ export async function render(root) {
     <div class="section-head"><h2>Последние видео</h2></div>
     <div id="recentVids"></div>`;
   $('#audit', mine).addEventListener('click', () => go('channel', { q: c.id }));
-  videoTable($('#recentVids', mine), a.videos.slice(0, 10), ['video', 'views', 'vph', 'eng', 'out']);
+  videoTable($('#recentVids', mine), a.videos.slice(0, 10), ['video', 'views', 'vph', 'eng', 'out'], undefined, { csvName: 'tubelens-my-videos' });
   $('#ideas', mine).addEventListener('click', async (e) => {
     const btn = e.currentTarget;
     const out = $('#ideasOut', mine);
