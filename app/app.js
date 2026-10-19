@@ -14,6 +14,9 @@ import * as ai from './views/ai.js';
 import * as coach from './views/coach.js';
 import * as downloads from './views/downloads.js';
 import * as settings from './views/settings.js';
+import * as bulkseo from './views/bulkseo.js';
+import * as abtest from './views/abtest.js';
+import * as alerts from './views/alerts.js';
 
 const ROUTES = [
   ['dashboard', 'Обзор', 'home', dashboard, 'Анализ'],
@@ -22,9 +25,12 @@ const ROUTES = [
   ['channel', 'Аудит канала', 'chart', channel],
   ['competitors', 'Конкуренты', 'users', competitors],
   ['trends', 'Аутлаеры', 'trend', trends],
+  ['bulkseo', 'SEO моего канала', 'checks', bulkseo],
   ['ai', 'AI-студия', 'sparkles', ai, 'Создание'],
   ['coach', 'AI-коуч', 'message', coach],
+  ['abtest', 'A/B-превью', 'layout', abtest],
   ['downloads', 'Загрузки', 'download', downloads, 'Инструменты'],
+  ['alerts', 'Уведомления', 'bell', alerts],
   ['settings', 'Настройки', 'settings', settings],
 ];
 

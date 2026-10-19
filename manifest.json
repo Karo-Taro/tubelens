@@ -3,7 +3,7 @@
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu3I1yD3Qh/IrYs4+xIaxVxvhk94Zmnfig240XJ3ZAqEVZKArOnUl1EK+Fizg8Sqf16YkeVfyddiD1HelQvLOKmX8nwX5fdLP5T56SOUw/tb4HYfJFajNcCbs5RABK8WCgwY4yPAlvrTotarjc4VKEvBig/tKrHvAS3rZkSL/991N0Ox8OIQhqvKguuSbU4rjGSEDHCfHApLFNrMWPExu5jia9cRITACXr7vhsCLyqV2Acta9O/4YIYo5svdXUGKXeJ4ey26hdjxdAqkRc5v9UOkSQdVGaVOUILrAbqV7CV19SzcSrfNaZzoMH3Q4XiP1+AcWazkBK4V7c2/pg/h73wIDAQAB",
   "name": "TubeLens — open YouTube growth toolkit",
   "short_name": "TubeLens",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Бесплатный open-source набор инструментов для роста на YouTube: ключевые слова, SEO-оценка, аудит канала, конкуренты, тренды и AI с вашим собственным API.",
   "icons": {
     "16": "icons/icon16.png",
@@ -62,5 +62,9 @@
       ],
       "run_at": "document_idle"
     }
+  ],
+  "optional_permissions": [
+    "alarms",
+    "notifications"
   ]
 }
