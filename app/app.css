@@ -295,3 +295,16 @@ details summary { cursor: pointer; }
   #nav .credit a b { color: var(--text); font-weight: 600; }
   #nav .credit a:hover .ic { color: var(--accent); }
 }
+
+/* ---------- Telegram YT Cartel: кнопка в шапке и карточка на главной ---------- */
+.tg-btn { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); }
+.tg-btn:hover { background: var(--accent-soft); color: var(--accent); text-decoration: none; }
+.tg-card { display: flex; align-items: center; gap: var(--s4); flex-wrap: wrap; padding: var(--s4) var(--s5); margin-bottom: var(--s6);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: var(--radius);
+  background: linear-gradient(100deg, var(--accent-soft), transparent 70%), var(--panel); }
+.tg-card .tg-ic { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); flex-shrink: 0; }
+.tg-card .tg-text { flex: 1; min-width: 200px; }
+.tg-card .tg-text b { display: block; font: 600 var(--fs-m)/1.3 var(--sans); }
+.tg-card .tg-text span { color: var(--muted); font-size: var(--fs-sm); }
+.tg-card .tg-x { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 6px; }
+.tg-card .tg-x:hover { color: var(--text); background: var(--panel2); }

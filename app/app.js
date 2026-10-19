@@ -39,6 +39,7 @@ if (isTab) $('#fullBtn').remove();
 else $('#fullBtn').addEventListener('click', () => chrome.tabs.create({ url: chrome.runtime.getURL('app/app.html?tab=1') + location.hash }));
 
 if (!isTab) $('#fullBtn').innerHTML = icon('expand', 15);
+$('#tgBtn').innerHTML = icon('plane', 16);
 
 // ---- тема ----
 const settings0 = await getSettings();

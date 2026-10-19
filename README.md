@@ -6,6 +6,32 @@
 
 **Без подписок, без аккаунтов, без своего сервера.** Ключ YouTube API не обязателен. AI можно подключить без API-ключа через CLI-агента на вашем компьютере. Все настройки, ключи и замеры хранятся только в вашем браузере.
 
+## Скриншоты
+
+<p align="center">
+  <img src="docs/screenshots/01-dashboard.png" alt="Обзор: ваш канал, медиана просмотров, последние 30 видео" width="100%">
+</p>
+
+### Прямо на YouTube
+
+| Панель на странице видео | Вкладка SEO |
+|---|---|
+| <img src="docs/screenshots/09-youtube-watch-panel.png" alt="Панель TubeLens на странице видео: SEO-оценка, VPH, множитель"> | <img src="docs/screenshots/10-youtube-watch-seo.png" alt="Вкладка SEO: чеклист, теги, оценка ключа"> |
+| **Канал: бейджи VPH и ×N, график, теги** | **«Фильтры»: пресеты, свои фильтры, CSV** |
+| <img src="docs/screenshots/11-youtube-channel-panel.png" alt="Страница канала с бейджами и боковой панелью"> | <img src="docs/screenshots/12-youtube-filters.png" alt="Оверлей фильтров видео"> |
+
+### Приложение
+
+| Ключевые слова | Анализ видео |
+|---|---|
+| <img src="docs/screenshots/02-keywords.png" alt="Оценка ключевого слова: спрос, конкуренция"> | <img src="docs/screenshots/03-video-report.png" alt="Отчёт по видео: SEO-линейка и метрики"> |
+| **Аудит канала** | **Аутлаеры в нише** |
+| <img src="docs/screenshots/04-channel-audit.png" alt="Аудит канала"> | <img src="docs/screenshots/05-outliers.png" alt="Поиск аутлаеров"> |
+| **AI-студия** | **7 тем: «Бумага» и «Бордо»** |
+| <img src="docs/screenshots/06-ai-studio.png" alt="AI-студия"> | <img src="docs/screenshots/07-keywords-light.png" alt="Светлая тема Бумага"> |
+
+<p align="center"><img src="docs/screenshots/08-settings-bordeaux.png" alt="Настройки в теме Бордо" width="70%"></p>
+
 ## Возможности
 
 ### Приложение (боковая панель или полноэкранная вкладка)

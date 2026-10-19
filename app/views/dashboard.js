@@ -1,5 +1,5 @@
 import { $, esc, fmt, pct, stat, go, icon, timeAgo, withLoading, videoTable, aiOutput, loadingHtml, errorHtml, pageHead } from '../ui.js';
-import { getSettings, getRecent } from '../../lib/storage.js';
+import { getSettings, getRecent, getData, setData } from '../../lib/storage.js';
 import { presetById } from '../../lib/presets.js';
 import { channelAudit, channelContext } from '../../lib/analysis.js';
 import { parseVideoId } from '../../lib/youtube.js';
@@ -38,6 +38,19 @@ function reel(videos, median) {
     <div class="dash-reel-scale"><span>раньше</span><span class="dash-reel-key"><span><i class="k-med"></i>медиана</span><span><i class="k-hi"></i>×2 и выше</span></span><span>сейчас</span></div></figure>`;
 }
 
+// Карточка Telegram-канала YT Cartel на главной (скрывается крестиком)
+async function tgCard(root) {
+  if (await getData('hideTgCard', false)) return;
+  const el = document.createElement('div');
+  el.className = 'tg-card';
+  el.innerHTML = `<span class="tg-ic">${icon('plane', 18)}</span>
+    <div class="tg-text"><b>Новости и обновления TubeLens — YT Cartel</b><span>Фишки для роста на YouTube и первые версии новых функций</span></div>
+    <a class="btn sm" href="https://t.me/YT_cartell" target="_blank" rel="noopener">${icon('plane', 14)} Открыть канал</a>
+    <button type="button" class="tg-x" title="Скрыть" aria-label="Скрыть карточку">${icon('x', 14)}</button>`;
+  el.querySelector('.tg-x').addEventListener('click', async () => { el.remove(); await setData('hideTgCard', true); });
+  root.querySelector('.page-head')?.after(el);
+}
+
 export async function render(root) {
   const s = await getSettings();
   const recent = await getRecent();
@@ -59,6 +72,7 @@ export async function render(root) {
         <span class="t"><b>${esc(r.title)}</b> <span class="muted small">· ${KIND[r.type]?.[1] || ''}${r.sub ? ' · ' + esc(r.sub) : ''}</span></span>
         <span class="when">${timeAgo(new Date(r.at).toISOString())}</span></li>`).join('')}</ul>`
       : `<div class="empty"><p>Здесь появятся видео, каналы и запросы, которые вы проверяли.</p>${s.myChannel ? cmdHint() : ''}</div>`}</div>`;
+  tgCard(root);
 
   root.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', () => document.getElementById('cmdInput')?.focus()));
   const open = (r) => go(r.type === 'video' ? 'video' : r.type === 'channel' ? 'channel' : 'keywords', r.type === 'video' ? { id: r.key } : { q: r.key });
